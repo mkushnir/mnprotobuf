@@ -210,7 +210,7 @@ typedef struct _mrkpb_value {
     union {
         int64_t i;
         double d;
-        bytes_t *s;
+        mnbytes_t *s;
     } value;
 } mrkpb_value_t;
 
@@ -219,7 +219,7 @@ typedef struct _mrkpb_repvalue {
     int64_t type;
     // id << 3 | wtype
     int64_t tag;
-    array_t values;
+    mnarray_t values;
 } mrkpb_repvalue_t;
 
 
@@ -227,16 +227,16 @@ typedef struct _mrkpb_msg {
     int64_t type;
     // id << 3 | wtype
     int64_t tag;
-    hash_t fields;
+    mnhash_t fields;
 } mrkpb_msg_t;
 
-ssize_t mrkpb_devarint(bytestream_t *, int, uint64_t *);
-ssize_t mrkpb_envarint(bytestream_t *, uint64_t);
+ssize_t mrkpb_devarint(mnbytestream_t *, int, uint64_t *);
+ssize_t mrkpb_envarint(mnbytestream_t *, uint64_t);
 
-ssize_t mrkpb_dezz64(bytestream_t *, int, int64_t *);
-ssize_t mrkpb_enzz64(bytestream_t *, int64_t);
-ssize_t mrkpb_dezz32(bytestream_t *, int, int32_t *);
-ssize_t mrkpb_enzz32(bytestream_t *, int32_t);
+ssize_t mrkpb_dezz64(mnbytestream_t *, int, int64_t *);
+ssize_t mrkpb_enzz64(mnbytestream_t *, int64_t);
+ssize_t mrkpb_dezz32(mnbytestream_t *, int, int32_t *);
+ssize_t mrkpb_enzz32(mnbytestream_t *, int32_t);
 
 #ifdef __cplusplus
 }

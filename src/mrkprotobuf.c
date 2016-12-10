@@ -9,7 +9,7 @@
 #include "diag.h"
 
 ssize_t
-mrkpb_devarint(bytestream_t *bs, int fd, uint64_t *v)
+mrkpb_devarint(mnbytestream_t *bs, int fd, uint64_t *v)
 {
     ssize_t res;
     int i;
@@ -49,7 +49,7 @@ end:
 
 
 ssize_t
-mrkpb_envarint(bytestream_t *bs, uint64_t v)
+mrkpb_envarint(mnbytestream_t *bs, uint64_t v)
 {
     ssize_t res;
 
@@ -74,7 +74,7 @@ mrkpb_envarint(bytestream_t *bs, uint64_t v)
 
 
 ssize_t
-mrkpb_dezz64(bytestream_t *bs, int fd, int64_t *v)
+mrkpb_dezz64(mnbytestream_t *bs, int fd, int64_t *v)
 {
     ssize_t res;
     uint64_t vv;
@@ -86,7 +86,7 @@ mrkpb_dezz64(bytestream_t *bs, int fd, int64_t *v)
 
 
 ssize_t
-mrkpb_enzz64(bytestream_t *bs, int64_t v)
+mrkpb_enzz64(mnbytestream_t *bs, int64_t v)
 {
     uint64_t vv;
 
@@ -97,7 +97,7 @@ mrkpb_enzz64(bytestream_t *bs, int64_t v)
 
 
 ssize_t
-mrkpb_dezz32(bytestream_t *bs, int fd, int32_t *v)
+mrkpb_dezz32(mnbytestream_t *bs, int fd, int32_t *v)
 {
     ssize_t res;
     uint64_t vv;
@@ -109,7 +109,7 @@ mrkpb_dezz32(bytestream_t *bs, int fd, int32_t *v)
 
 
 ssize_t
-mrkpb_enzz32(bytestream_t *bs, int32_t v)
+mrkpb_enzz32(mnbytestream_t *bs, int32_t v)
 {
     uint64_t vv;
 
@@ -119,7 +119,7 @@ mrkpb_enzz32(bytestream_t *bs, int32_t v)
 
 
 ssize_t
-mrkpb_defi64(bytestream_t *bs, int fd, int64_t *v)
+mrkpb_defi64(mnbytestream_t *bs, int fd, int64_t *v)
 {
     size_t res;
     union {
@@ -147,7 +147,7 @@ end:
 
 
 ssize_t
-mrkpb_enfi64(bytestream_t *bs, int64_t v)
+mrkpb_enfi64(mnbytestream_t *bs, int64_t v)
 {
     SCATI64(bs, v);
     return sizeof(int64_t);
@@ -155,7 +155,7 @@ mrkpb_enfi64(bytestream_t *bs, int64_t v)
 
 
 ssize_t
-mrkpb_dedouble(bytestream_t *bs, int fd, double *v)
+mrkpb_dedouble(mnbytestream_t *bs, int fd, double *v)
 {
     size_t res;
     union {
@@ -183,7 +183,7 @@ end:
 
 
 ssize_t
-mrkpb_endouble(bytestream_t *bs, double v)
+mrkpb_endouble(mnbytestream_t *bs, double v)
 {
     SCATD(bs, v);
     return sizeof(double);

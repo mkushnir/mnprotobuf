@@ -37,7 +37,7 @@ MRKPB_DEF_MESSAGE(msg, 6, 0, 0,
 
 typedef struct _pair {
     int64_t id;
-    bytes_t *name;
+    mnbytes_t *name;
 } pair_t;
 typedef struct _msg {
     pair_t qwe;
@@ -67,13 +67,13 @@ test0(void)
 }
 
 
-static bytes_t b0 = BYTES_INITIALIZER("\xac\x02\xf0\xac\x02");
+static mnbytes_t b0 = BYTES_INITIALIZER("\xac\x02\xf0\xac\x02");
 
 UNUSED static void
 test1(void)
 {
     ssize_t res;
-    bytestream_t ins, outs;
+    mnbytestream_t ins, outs;
     uint64_t v;
 
     bytestream_from_bytes(&ins, &b0);
@@ -116,7 +116,7 @@ UNUSED static void
 test2(void)
 {
     ssize_t res;
-    bytestream_t outs;
+    mnbytestream_t outs;
     int64_t v;
     struct {
         long rnd;
@@ -163,7 +163,7 @@ UNUSED static void
 test3(void)
 {
     ssize_t res;
-    bytestream_t outs;
+    mnbytestream_t outs;
     int32_t v;
     struct {
         long rnd;
