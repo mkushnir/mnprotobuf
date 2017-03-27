@@ -31,7 +31,7 @@ testfoo_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACR
 testfoo_LDFLAGS = -L$(top_srcdir)/src/.libs -lmrkprotobuf
 
 diag.c diag.h: diag.txt gen-diag
-	$(AM_V_GEN) /bin/sh ./gen-diag mrkprotobuf
+	$(AM_V_GEN) cat diag.txt | sort -u | /bin/sh ./gen-diag mrkprotobuf
 
 testrun: all
 	for i in $(noinst_PROGRAMS); do if test -x ./$$i; then LD_LIBRARY_PATH=$(libdir) ./$$i; fi; done;
