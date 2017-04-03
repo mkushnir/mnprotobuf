@@ -230,12 +230,12 @@ typedef struct _mrkpb_msg {
     mnhash_t fields;
 } mrkpb_msg_t;
 
-ssize_t mrkpb_devarint(mnbytestream_t *, int, uint64_t *);
+ssize_t mrkpb_devarint(mnbytestream_t *, void *, uint64_t *);
 ssize_t mrkpb_envarint(mnbytestream_t *, uint64_t);
 
-ssize_t mrkpb_dezz64(mnbytestream_t *, int, int64_t *);
+ssize_t mrkpb_dezz64(mnbytestream_t *, void *, int64_t *);
 ssize_t mrkpb_enzz64(mnbytestream_t *, int64_t);
-ssize_t mrkpb_dezz32(mnbytestream_t *, int, int32_t *);
+ssize_t mrkpb_dezz32(mnbytestream_t *, void *, int32_t *);
 ssize_t mrkpb_enzz32(mnbytestream_t *, int32_t);
 
 #ifdef __cplusplus

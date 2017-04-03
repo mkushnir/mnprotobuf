@@ -81,17 +81,17 @@ test1(void)
 
     bytestream_init(&outs, 1024);
 
-    res = mrkpb_devarint(&ins, -1, &v);
+    res = mrkpb_devarint(&ins, NULL, &v);
     TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, v, SPOS(&ins), SEOD(&ins));
-    res = mrkpb_devarint(&ins, -1, &v);
+    res = mrkpb_devarint(&ins, NULL, &v);
     TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, v, SPOS(&ins), SEOD(&ins));
-    res = mrkpb_devarint(&ins, -1, &v);
+    res = mrkpb_devarint(&ins, NULL, &v);
     TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, v, SPOS(&ins), SEOD(&ins));
-    res = mrkpb_devarint(&ins, -1, &v);
+    res = mrkpb_devarint(&ins, NULL, &v);
     TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, v, SPOS(&ins), SEOD(&ins));
-    res = mrkpb_devarint(&ins, -1, &v);
+    res = mrkpb_devarint(&ins, NULL, &v);
     TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, v, SPOS(&ins), SEOD(&ins));
-    res = mrkpb_devarint(&ins, -1, &v);
+    res = mrkpb_devarint(&ins, NULL, &v);
     TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, v, SPOS(&ins), SEOD(&ins));
 
     res = mrkpb_envarint(&outs, 300);
@@ -151,7 +151,7 @@ test2(void)
 
     SPOS(&outs) = 0;
     FOREACHDATA {
-        res = mrkpb_dezz64(&outs, -1, &v);
+        res = mrkpb_dezz64(&outs, NULL, &v);
         TRACE("res=%ld v=%ld spos=%ld seod=%ld", res, v, SPOS(&outs), SEOD(&outs));
     }
 
@@ -199,7 +199,7 @@ test3(void)
 
     SPOS(&outs) = 0;
     FOREACHDATA {
-        res = mrkpb_dezz32(&outs, -1, &v);
+        res = mrkpb_dezz32(&outs, NULL, &v);
         TRACE("res=%ld v=%d spos=%ld seod=%ld", res, v, SPOS(&outs), SEOD(&outs));
     }
 
