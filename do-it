@@ -18,8 +18,8 @@ then
 
 elif test "$1" = "dev"
 then
-    export LDFLAGS=-L$HOME/lib
-    export CFLAGS=-I$HOME/include
+    export LDFLAGS="$LDFLAGS -L$HOME/lib"
+    export CFLAGS="$CFLAGS -I$HOME/include"
     autoreconf --force
     ./configure --prefix=$HOME --enable-debug
 

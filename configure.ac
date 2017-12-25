@@ -52,6 +52,9 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_LANG(C)
 
 AC_PROG_CC
+AM_PROG_LEX
+AC_PROG_YACC
+AC_SUBST(YFLAGS, ["-d -v -t"]) dnl
 AC_PROG_CXX
 AM_PROG_AR
 AC_PROG_RANLIB
@@ -91,6 +94,7 @@ AC_ARG_ENABLE(debug,
 
 AM_CONDITIONAL([LINUX], [echo $build_os | grep linux >/dev/null])
 AM_CONDITIONAL([FREEBSD], [echo $build_os | grep freebsd >/dev/null])
+AM_CONDITIONAL([DARWIN], [echo $build_os | grep darwin >/dev/null])
 
 #dnl pass LDFLAGS=-L${LOCALBASE}/lib in the environment
 #AC_CHECK_LIB(mrkcommon, _fini, [], [AC_MSG_FAILURE(libmrkcommon.so is required. Please find it at git@github.com:mkushnir/mrkcommon.git)])

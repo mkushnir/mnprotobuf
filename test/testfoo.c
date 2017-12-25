@@ -1,10 +1,13 @@
 #include <assert.h>
+#include <libgen.h>
 
 #include <mrkcommon/bytes.h>
 #include <mrkcommon/bytestream_aux.h>
 #include <mrkcommon/dumpm.h>
 #include <mrkcommon/util.h>
 
+#define MRKPROTOBUF_OBSOLETE
+#include <mrkpbc.h>
 #include <mrkprotobuf.h>
 
 #include "unittest.h"
@@ -13,6 +16,8 @@
 const char *_malloc_options = "AJ";
 #endif
 
+
+UNUSED static mnbytes_t *datadir;
 
 static MRKPB_DEF_INT64(id, 1, 0, 0);
 static MRKPB_DEF_STR(name, 2, 0, 0);
@@ -70,7 +75,7 @@ test0(void)
 static mnbytes_t b0 = BYTES_INITIALIZER("\xac\x02\xf0\xac\x02");
 
 UNUSED static void
-test1(void)
+test_varint(void)
 {
     ssize_t res;
     mnbytestream_t ins, outs;
@@ -82,17 +87,17 @@ test1(void)
     bytestream_init(&outs, 1024);
 
     res = mrkpb_devarint(&ins, NULL, &v);
-    TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, v, SPOS(&ins), SEOD(&ins));
+    TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, (long)v, (long)SPOS(&ins), (long)SEOD(&ins));
     res = mrkpb_devarint(&ins, NULL, &v);
-    TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, v, SPOS(&ins), SEOD(&ins));
+    TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, (long)v, (long)SPOS(&ins), (long)SEOD(&ins));
     res = mrkpb_devarint(&ins, NULL, &v);
-    TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, v, SPOS(&ins), SEOD(&ins));
+    TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, (long)v, (long)SPOS(&ins), (long)SEOD(&ins));
     res = mrkpb_devarint(&ins, NULL, &v);
-    TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, v, SPOS(&ins), SEOD(&ins));
+    TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, (long)v, (long)SPOS(&ins), (long)SEOD(&ins));
     res = mrkpb_devarint(&ins, NULL, &v);
-    TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, v, SPOS(&ins), SEOD(&ins));
+    TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, (long)v, (long)SPOS(&ins), (long)SEOD(&ins));
     res = mrkpb_devarint(&ins, NULL, &v);
-    TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, v, SPOS(&ins), SEOD(&ins));
+    TRACE("res=%ld v=%016lx spos=%ld seod=%ld", res, (long)v, (long)SPOS(&ins), (long)SEOD(&ins));
 
     res = mrkpb_envarint(&outs, 300);
     TRACE("res=%ld", res);
@@ -152,7 +157,7 @@ test2(void)
     SPOS(&outs) = 0;
     FOREACHDATA {
         res = mrkpb_dezz64(&outs, NULL, &v);
-        TRACE("res=%ld v=%ld spos=%ld seod=%ld", res, v, SPOS(&outs), SEOD(&outs));
+        TRACE("res=%ld v=%ld spos=%ld seod=%ld", res, (long)v, (long)SPOS(&outs), (long)SEOD(&outs));
     }
 
     bytestream_fini(&outs);
@@ -200,19 +205,105 @@ test3(void)
     SPOS(&outs) = 0;
     FOREACHDATA {
         res = mrkpb_dezz32(&outs, NULL, &v);
-        TRACE("res=%ld v=%d spos=%ld seod=%ld", res, v, SPOS(&outs), SEOD(&outs));
+        TRACE("res=%ld v=%d spos=%ld seod=%ld", res, v, (long)SPOS(&outs), (long)SEOD(&outs));
     }
 
     bytestream_fini(&outs);
 }
 
 
-int
-main(void)
+UNUSED static void
+test4(void)
 {
+    ssize_t res;
+    BYTES_ALLOCA(s, "This is the test");
+    mnbytestream_t outs;
+
+    bytestream_init(&outs, 1024);
+    res = mrkpb_enbytes(&outs, s);
+    TRACE("res=%ld", res);
+    res = mrkpb_enstr(&outs, s);
+    TRACE("res=%ld", res);
+    D8(SDATA(&outs, 0), SEOD(&outs));
+    bytestream_fini(&outs);
+}
+
+
+UNUSED static void
+test5(void)
+{
+    struct {
+        long rnd;
+        uint64_t in;
+        ssize_t expected;
+    } data[] = {
+        {0, 0, 1},
+        {0, 1, 1},
+        {0, 2, 1},
+        {0, 126, 1},
+        {0, 127, 1},
+        {0, 128, 2},
+        {0, 0xff, 2},
+        {0, 0x100, 2},
+        {0, 0x200, 2},
+        {0, 1<<13, 2},
+        {0, 1<<14, 3},
+        {0, 1<<15, 3},
+        {0, 1<<20, 3},
+        {0, 1<<21, 4},
+        {0, 1<<22, 4},
+        {0, 1<<27, 4},
+        {0, 1<<28, 5},
+        {0, 1<<29, 5},
+        {0, 1l<<61, 9},
+        {0, 1l<<62, 9},
+        {0, 1l<<63, 10},
+    };
+    UNITTEST_PROLOG;
+
+    FOREACHDATA {
+        ssize_t res;
+        ssize_t sz;
+        mnbytestream_t outs;
+
+        bytestream_init(&outs, 1024);
+        sz = mrkpb_szvarint(CDATA.in);
+        res = mrkpb_envarint(&outs, CDATA.in);
+        //TRACE("sz=%ld res=%ld expected=%ld", sz, res, CDATA.expected);
+        //D8(SDATA(&outs, 0), SEOD(&outs));
+
+        assert(sz == res);
+        assert(sz == CDATA.expected);
+
+        bytestream_fini(&outs);
+        //TRACE("in=%d expected=%d", CDATA.in, CDATA.expected);
+        //assert(CDATA.in == CDATA.expected);
+    }
+}
+
+
+static void
+test6(void)
+{
+    mnbytes_t *protofile;
+
+    protofile = bytes_printf("%s/%s", BDATA(datadir), "scalar-01.proto");
+
+    TRACE("protofile=%s", BDATA(protofile));
+    BYTES_DECREF(&protofile);
+}
+
+int
+main(int argc, UNUSED char *argv[static argc])
+{
+    datadir = bytes_printf("%s/test/data", PACKAGE_ROOT);
     //test0();
-    //test1();
+    test_varint();
     test2();
     test3();
+    test4();
+    test5();
+    test6();
+    BYTES_DECREF(&datadir);
     return 0;
 }
