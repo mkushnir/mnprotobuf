@@ -58,7 +58,7 @@ main(void)
     D8(SPDATA(&bs1), SEOD(&bs1));
 
     sz = scalar_03_unpack(&bs1, NULL, sc1);
-    TRACE("sz=%zd spos=%ld", sz, SPOS(&bs1));
+    TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs1));
 
     bytestream_rewind(&bs0);
     sz = scalar_03_dump(&bs0, sc0);

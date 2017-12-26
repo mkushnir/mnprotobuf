@@ -64,7 +64,7 @@ main(void)
     D8(SPDATA(&bs1), SEOD(&bs1));
 
     sz = vector_01_unpack(&bs1, NULL, vec1);
-    TRACE("sz=%zd spos=%ld", sz, SPOS(&bs1));
+    TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs1));
 
     bytestream_rewind(&bs0);
     sz = vector_01_dump(&bs0, vec0);
