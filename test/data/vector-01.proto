@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+message vector_01 {
+    int64 id = 1;
+    repeated uint32 tags = 2;
+    repeated Extra extra = 3;
+
+    message Extra {
+        repeated string things = 1;
+    }
+}

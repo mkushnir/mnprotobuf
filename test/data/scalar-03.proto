@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+message scalar_03 {
+    int32 id = 1;
+    oneof quantity {
+        int32 wholes = 2;
+        double fractals = 100;
+        string phrases = 101;
+        //scalar_03.Person person = 103;
+    }
+    Person person = 4;
+    double fuzzy = 5;
+
+    message Person {
+        string first = 1;
+        string last = 2;
+        sint32 sage = 3;
+        int32 age = 4;
+    }
+}
+

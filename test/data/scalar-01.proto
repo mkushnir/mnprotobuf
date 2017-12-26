@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+message scalar_01 {
+    int32 id = 1;
+    string name = 2;
+    float weight = 3;
+    enum impression_t {
+        UNKNOWN = 0;
+        WORST = 1;
+        BAD = 2;
+        SOSO = 3;
+        GOOD = 4;
+        EXCELLENT = 5;
+    }
+    impression_t impression = 4;
+    qwe_t qwe = 999;
+}
