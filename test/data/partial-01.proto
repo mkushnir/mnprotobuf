@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+message partial_01 {
+
+    int32 i32 = 1;
+    uint32 ui32 = 2;
+    sint32 si32 = 3;
+    fixed32 f32 = 4;
+    sfixed32 sf32 = 5;
+
+    int64 i64 = 11;
+    uint64 ui64 = 12;
+    sint64 si64 = 13;
+    fixed64 f64 = 14;
+    sfixed64 sf64 = 15;
+
+    float f = 21;
+    double d = 22;
+
+    string s = 31;
+    bytes b = 32;
+
+    bool bb = 43;
+}

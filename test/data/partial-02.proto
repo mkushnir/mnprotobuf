@@ -1,0 +1,5 @@
+syntax = "proto3";
+message partial_02 {
+    repeated string things = 1;
+}
+

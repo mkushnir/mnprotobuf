@@ -1056,8 +1056,8 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             BDATA((*field)->pb.name));
 
     } else if ((*field)->wtype == MRKPB_WT_INTERN) {
-        UNUSED mrkpbc_field_t **ufield;
-        UNUSED mnarray_iter_t it;
+        mrkpbc_field_t **ufield;
+        mnarray_iter_t it;
 
         /*
          * MRKPB_WT_INTERN is not a "valid" wire type.  I use it as
@@ -1087,15 +1087,48 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
             } else if (ucty->kind == MRKPBC_CONT_KENUM) {
                 FAIL("print_unpack_field");
+
             } else if (ucty->kind == MRKPBC_CONT_KBUILTIN) {
+                mrkpbc_field_t **cfield;
+                mnarray_iter_t cit;
+
                 (void)bytestream_nprintf(bs, 1024,
-                    "        case %"PRId64":\n"
+                    "        case %"PRId64":\n",
+                    (*ufield)->fnum);
+
+                /* cleanup old strings and/or bytes */
+                (void)bytestream_nprintf(bs, 1024,
+                    "            switch (msg->%s.fnum) {\n",
+                    BDATA((*field)->be.name));
+
+                for (cfield = array_first(&cty->fields, &cit);
+                     cfield != NULL;
+                     cfield = array_next(&cty->fields, &cit)) {
+
+                    if (cfield == ufield) {
+                        continue;
+                    }
+
+                    if (!MRKPB_WT_NUMERIC((*cfield)->wtype)) {
+                        (void)bytestream_nprintf(bs, 1024,
+                            "            case %"PRId64": "
+                                "BYTES_DECREF(&msg->%s.data.%s); break;\n",
+                            (*cfield)->fnum,
+                            BDATA((*field)->be.name),
+                            BDATA((*cfield)->be.name));
+                    }
+                }
+                (void)bytestream_nprintf(bs, 1024,
+                    "            default: break;\n"
+                    "            }\n");
+
+                /* write new value */
+                (void)bytestream_nprintf(bs, 1024,
                     "            if ((nread = %s(bs, fd, wtype, "
                                     "&msg->%s.data.%s)) < 0) { "
                                      "res = nread; goto end; }\n"
                     "            msg->%s.fnum = %"PRId64"; "
                                     "res += nread; break;\n",
-                    (*ufield)->fnum,
                     BDATA(ucty->be.decode),
                     BDATA((*field)->be.name),
                     BDATA((*ufield)->be.name),
@@ -1119,35 +1152,6 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
         /*
          * wither enum or message or builtin
          */
-
-        /*
-         *  case tag:
-         *      {
-         *          if (wtype != %d) {
-         *              res = -1;
-         *              goto end;
-         *          }
-         *          if ((nread = mrkpb_devarint(bs, fd, &sz)) < 0) {
-         *              res = nread;
-         *              goto end;
-         *          }
-         *          res += nread;
-         *          for (size_t n = 0, nread = 0; n < sz; n += nread) {
-         *
-         *              TY *item;
-         *              if ((item = ..._alloc(msg, %s, 1)) == NULL) {
-         *                  res = -1;
-         *                  goto end;
-         *              }
-         *              if ((nread = mrkpbc_unpack_...(bs, fd, ..., item)) < 0) {
-         *
-         *                  res = nread;
-         *                  goto end;
-         *              }
-         *          }
-         *      }
-         *
-         */
         kwf = mrkpbc_container_keyword(cty);
 
         cont = (*field)->parent;
@@ -1157,12 +1161,14 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
         (void)bytestream_nprintf(bs, 1024,
             "        case %"PRId64":\n"
             "            if (wtype != %d) { res = -1; goto end; }\n"
-            "            if ((nread = mrkpb_devarint(bs, fd, &sz)) < 0) { res = nread; goto end; } res += nread;\n"
+            "            if ((nread = mrkpb_devarint(bs, fd, &sz)) < 0) { "
+                            "res = nread; goto end; } res += nread;\n"
             "            for (n = 0, nread = 0; n < (ssize_t)sz; ) {\n"
             "                %s%s *item;\n"
             "                UNUSED uint64_t etag;\n"
             "                UNUSED uint64_t esz;\n"
-            "                if ((item = %s_%s_alloc(msg, 1)) == NULL) { res = -1; goto end; }\n"
+            "                if ((item = %s_%s_alloc(msg, 1)) == NULL) { "
+                                "res = -1; goto end; }\n"
             ,
             (*field)->fnum,
             MRKPB_WT_LDELIM,
@@ -1176,22 +1182,23 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
              *:sh
 
              */
-            //(void)bytestream_nprintf(bs, 1024,
-            //    "                if ((nread = mrkpb_devarint(bs, fd, &etag)) < 0) { res = nread; goto end; } TRACE(\"etag=%%ld\", etag); n += nread;\n");
-            //(void)bytestream_nprintf(bs, 1024,
-            //    "                if ((nread = mrkpb_devarint(bs, fd, &esz)) < 0) { res = nread; goto end; } TRACE(\"esz=%%ld\", esz); n += nread;\n");
             (void)bytestream_nprintf(bs, 1024,
-                "                if ((nread = %s(bs, fd, item)) < 0) { res = nread; goto end; } n += nread;\n",
+                "                if ((nread = %s(bs, fd, item)) < 0) { "
+                                    "res = nread; goto end; } n += nread;\n",
                 BDATA(cty->be.decode));
 
         } else if (cty->kind == MRKPBC_CONT_KENUM) {
             (void)bytestream_nprintf(bs, 1024,
-                "                {int64_t v; if ((nread = %s(bs, fd, -1, &v)) < 0) { res = nread; goto end; } *item = v; n += nread; }\n",
+                "                { int64_t v; if ((nread = "
+                                    "%s(bs, fd, -1, &v)) < 0) { "
+                                    "res = nread; goto end; } *item = v; "
+                                    "n += nread; }\n",
                 BDATA(cty->be.decode));
 
         } else if (cty->kind == MRKPBC_CONT_KBUILTIN) {
             (void)bytestream_nprintf(bs, 1024,
-                "                if ((nread = %s(bs, fd, -1, item)) < 0) { res = nread; goto end; } n += nread;\n",
+                "                if ((nread = %s(bs, fd, -1, item)) < 0) { "
+                                    "res = nread; goto end; } n += nread;\n",
                 BDATA(cty->be.decode));
 
         } else {
@@ -1216,7 +1223,8 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                                 "res = nread; goto end; } res += nread;\n"
                 "            if ((nread = %s(bs, fd, &msg->%s)) < 0) { "
                                 "res = nread; goto end; }\n"
-                "            if (nread != (ssize_t)sz) { res = -2; goto end; }\n"
+                "            if (nread != (ssize_t)sz) { "
+                                "res = -2; goto end; }\n"
                 "            res += nread; break;\n"
                 ,
                 (*field)->fnum,
@@ -1280,9 +1288,9 @@ print_unpack(mrkpbc_container_t *cont, mnbytestream_t *bs)
                              "        int wtype;\n"
                              "        if ((nread = mrkpb_unpack_key("
                                           "bs, fd, &tag, &wtype)) < 0) { "
-                                          "if (nread != MRKPB_EIO) { res = nread; } ; goto end; }\n"
+                                          "if (nread != MRKPB_EIO) { "
+                                            "res = nread; } ; goto end; }\n"
                              "        res += nread;\n"
-                             "        //TRACE(\"tag=%%ld wtype=%%d\", tag, wtype);\n"
                              "        switch (tag) {\n"
                              ,
                              BDATA(cont->be.decode),
@@ -1393,7 +1401,6 @@ print_sz_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             "    if (n > 0) { "
             "res += mrkpb_szvarint(0x%08"PRIx64") + mrkpb_szvarint(n) + n; }\n",
             MRKPB_MAKEKEY(MRKPB_WT_LDELIM, (*field)->fnum));
-        //(void)bytestream_nprintf(bs, 1024, "    res += mrkpb_szvarint(n) + n;\n");
 
     } else {
         if ((cty)->kind == MRKPBC_CONT_KMESSAGE) {
@@ -1516,7 +1523,8 @@ print_dump_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
             (void)bytestream_nprintf(bs, 1024,
                 "    case %"PRId64":\n"
-                "        res += bytestream_nprintf(bs, 1024, \"%"PRId64":%s:%s:\");\n"
+                "        res += bytestream_nprintf(bs, 1024, "
+                            "\"%"PRId64":%s:%s:\");\n"
                 "        res += %s(bs, %smsg->%s.data.%s);\n"
                 "        break;\n",
                 (*ufield)->fnum,
