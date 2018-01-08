@@ -267,6 +267,15 @@ mrkpbc_container_set_be_sz(mrkpbc_container_t *cont, mnbytes_t *sz)
 
 
 void
+mrkpbc_container_set_be_rawsz(mrkpbc_container_t *cont, mnbytes_t *rawsz)
+{
+    BYTES_DECREF(&cont->be.rawsz);
+    cont->be.rawsz = rawsz;
+    BYTES_INCREF(cont->be.rawsz);
+}
+
+
+void
 mrkpbc_container_set_be_dump(mrkpbc_container_t *cont, mnbytes_t *dump)
 {
     BYTES_DECREF(&cont->be.dump);
@@ -420,7 +429,7 @@ fnum_hash(void *v)
 static int
 fnum_cmp(void *a, void *b)
 {
-    return a > b ? 1: a < b ? -1 : 0;
+    return MNCMP(a, b);
 }
 
 

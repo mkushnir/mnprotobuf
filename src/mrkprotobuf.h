@@ -68,11 +68,11 @@ ssize_t mrkpb_dumpstr(mnbytestream_t *, mnbytes_t *);
 
 ssize_t mrkpb_deldelim(mnbytestream_t *,
                        void *,
-                       ssize_t (*)(mnbytestream_t *, void *, void *),
+                       ssize_t (*)(mnbytestream_t *, void *, ssize_t, void *),
                        void *);
 ssize_t mrkpb_enldelim(mnbytestream_t *,
                        size_t,
-                       ssize_t (*)(mnbytestream_t *, void *),
+                       ssize_t (*)(mnbytestream_t *, ssize_t, void *),
                        void *);
 
 

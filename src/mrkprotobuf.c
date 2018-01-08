@@ -29,6 +29,8 @@
 #   define MNFLS(v) flsl((long)(v))
 #endif
 
+void mndiag_mrkcommon_str(int, char *, size_t);
+
 ssize_t
 mrkpb_devarint(mnbytestream_t *bs, void *fd, uint64_t *v)
 {
@@ -43,7 +45,9 @@ mrkpb_devarint(mnbytestream_t *bs, void *fd, uint64_t *v)
 
         if (SNEEDMORE(bs)) {
             if ((res = bytestream_consume_data(bs, fd)) != 0) {
-                //TRACE("res=%s", mrkcommon_diag_str(res));
+                //char buf[64];
+                //mndiag_mrkcommon_str(res, buf, sizeof(buf));
+                //TRACE("res=%s", buf);
                 res = MRKPB_EIO;
                 goto end;
             }
@@ -65,6 +69,7 @@ mrkpb_devarint(mnbytestream_t *bs, void *fd, uint64_t *v)
     }
 
 end:
+    assert(res != 0);
     return res;
 }
 
@@ -218,6 +223,7 @@ mrkpb_defi64(mnbytestream_t *bs, void *fd, uint64_t *v)
     SADVANCEPOS(bs, sizeof(uint64_t));
 
 end:
+    assert(res != 0);
     return res;
 }
 
@@ -268,6 +274,7 @@ mrkpb_defi32(mnbytestream_t *bs, void *fd, uint32_t *v)
     SADVANCEPOS(bs, sizeof(uint32_t));
 
 end:
+    assert(res != 0);
     return res;
 }
 
@@ -318,6 +325,7 @@ mrkpb_dedouble(mnbytestream_t *bs, void *fd, double *v)
     SADVANCEPOS(bs, sizeof(double));
 
 end:
+    assert(res != 0);
     return res;
 }
 
@@ -368,6 +376,7 @@ mrkpb_defloat(mnbytestream_t *bs, void *fd, float *v)
     SADVANCEPOS(bs, sizeof(float));
 
 end:
+    assert(res != 0);
     return res;
 }
 
@@ -426,6 +435,7 @@ mrkpb_debytes(mnbytestream_t *bs, void *fd, mnbytes_t **v)
     res += sz;
 
 end:
+    assert(res != 0);
     return res;
 }
 
@@ -462,6 +472,7 @@ mrkpb_destr(mnbytestream_t *bs, void *fd, mnbytes_t **v)
     res += sz;
 
 end:
+    assert(res != 0);
     return res;
 }
 
@@ -485,6 +496,7 @@ mrkpb_enbytes(mnbytestream_t *bs, mnbytes_t *v)
     res0 += res1;
 
 end:
+    assert(res0 != 0);
     return res0;
 }
 
@@ -512,6 +524,7 @@ mrkpb_enstr(mnbytestream_t *bs, mnbytes_t *v)
     res0 += res1;
 
 end:
+    assert(res0 != 0);
     return res0;
 }
 
@@ -561,7 +574,7 @@ mrkpb_dumpstr(mnbytestream_t *bs, mnbytes_t *v)
 ssize_t
 mrkpb_deldelim(mnbytestream_t *bs,
                void *fd,
-               ssize_t (*cb)(mnbytestream_t *, void *, void *),
+               ssize_t (*cb)(mnbytestream_t *, void *, ssize_t, void *),
                void *udata)
 {
     ssize_t res;
@@ -575,7 +588,7 @@ mrkpb_deldelim(mnbytestream_t *bs,
         goto end;
     }
 
-    res = cb(bs, fd, udata);
+    res = cb(bs, fd, sz, udata);
 
 end:
     return res;
@@ -585,7 +598,7 @@ end:
 ssize_t
 mrkpb_enldelim(mnbytestream_t *bs,
                size_t sz,
-               ssize_t (*cb)(mnbytestream_t *, void *),
+               ssize_t (*cb)(mnbytestream_t *, ssize_t, void *),
                void *udata)
 {
     ssize_t res0, res1;
@@ -594,7 +607,7 @@ mrkpb_enldelim(mnbytestream_t *bs,
         goto end;
     }
 
-    if ((res1 = cb(bs, udata)) < 0) {
+    if ((res1 = cb(bs, sz, udata)) < 0) {
         res0 = MRKPB_EIO;
         goto end;
     }
@@ -602,6 +615,7 @@ mrkpb_enldelim(mnbytestream_t *bs,
     res0 += res1;
 
 end:
+    assert(res0 != 0);
     return res0;
 }
 

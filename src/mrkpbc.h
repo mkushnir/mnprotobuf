@@ -33,7 +33,7 @@ extern "C" {
      (wtype) == MRKPB_WT_64BIT ? "8" : \
      (wtype) == MRKPB_WT_LDELIM ? "L" :\
      (wtype) == MRKPB_WT_32BIT ? "4" : \
-     "-")                              \
+     "")                               \
 
 #ifndef MRKPB_MAX_BYTES
 #   define MRKPB_MAX_BYTES (0x100000)
@@ -83,6 +83,7 @@ typedef struct _mrkpbc_container {
         mnbytes_t *encode;
         mnbytes_t *decode;
         mnbytes_t *sz;
+        mnbytes_t *rawsz;
         mnbytes_t *dump;
     } be;
 
@@ -189,6 +190,9 @@ void mrkpbc_container_set_be_decode(mrkpbc_container_t *,
 
 void mrkpbc_container_set_be_sz(mrkpbc_container_t *,
                                 mnbytes_t *);
+
+void mrkpbc_container_set_be_rawsz(mrkpbc_container_t *,
+                                   mnbytes_t *);
 
 void mrkpbc_container_set_be_dump(mrkpbc_container_t *,
                                   mnbytes_t *);

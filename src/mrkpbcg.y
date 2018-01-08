@@ -81,22 +81,22 @@ etag:
         $$ = (int)strtol(yytext, NULL, 10);
     };
 
-sbfield:
-     builtin token MRKPBC_EQUALS tag MRKPBC_SEMI {
-        mrkpbc_container_t *cont;
-
-        if ((cont = mrkpbc_ctx_top_container(ctx)) != NULL) {
-            int res;
-
-            if ((res = mrkpbc_container_add_field(cont,
-                                                  $1,
-                                                  $2,
-                                                  $4,
-                                                  0)) != 0) {
-                YYERROR;
-            }
-        }
-     };
+//sbfield:
+//     builtin token MRKPBC_EQUALS tag MRKPBC_SEMI {
+//        mrkpbc_container_t *cont;
+//
+//        if ((cont = mrkpbc_ctx_top_container(ctx)) != NULL) {
+//            int res;
+//
+//            if ((res = mrkpbc_container_add_field(cont,
+//                                                  $1,
+//                                                  $2,
+//                                                  $4,
+//                                                  0)) != 0) {
+//                YYERROR;
+//            }
+//        }
+//     };
 
 sfield:
      type token MRKPBC_EQUALS tag MRKPBC_SEMI {
@@ -179,8 +179,11 @@ enum:
     }
     ;
 
-sbfields:
-    | sbfield sbfields;
+//sbfields:
+//    | sbfield sbfields;
+
+sfields:
+    | sfield sfields;
 
 ostart:
     MRKPBC_ONEOF token {
@@ -198,7 +201,7 @@ ostart:
     ;
 
 oneof:
-    ostart MRKPBC_LCURLY sbfields MRKPBC_RCURLY {
+    ostart MRKPBC_LCURLY sfields MRKPBC_RCURLY {
         mrkpbc_container_t *un, *cont;
         int res;
 
@@ -282,6 +285,7 @@ proto:
  *      - enum with int32, uint32, int64, and uint64
  *  - unknown fields: unpack and ignore
  *  - the Any messages
+ *  - sub-messages in oneof
  *  - oneof of unknown fnum
  *  - map<> support
  *  - service

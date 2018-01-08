@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+// example echo '{"id":234,"body":{"payload":["John","Doe"]}}'|hd
+
+message req1 {
+    string payload = 1;
+}
+
+message req2 {
+    repeated string payload = 1;
+}
+
+message scalar_04_req {
+    int32 id = 1;
+    oneof body {
+        req1 r1 = 16;
+        req2 r2 = 17;
+    }
+}

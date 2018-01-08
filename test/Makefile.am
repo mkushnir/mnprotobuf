@@ -11,13 +11,14 @@ AM_MAKEFLAGS = -s
 #   - noinst_HEADERS
 noinst_HEADERS = unittest.h
 
-noinst_PROGRAMS=test-scalar-01 test-scalar-02 test-scalar-03 test-vector-01 test-partial-01 test-partial-02
+noinst_PROGRAMS=test-scalar-01 test-scalar-02 test-scalar-03 test-scalar-04 test-vector-01 test-partial-01 test-partial-02
 
 BUILT_SOURCES = \
 	diag.c diag.h \
 	data/scalar-01.proto.c data/scalar-01.proto.h \
 	data/scalar-02.proto.c data/scalar-02.proto.h \
 	data/scalar-03.proto.c data/scalar-03.proto.h \
+	data/scalar-04.proto.c data/scalar-04.proto.h \
 	data/vector-01.proto.c data/vector-01.proto.h \
 	data/partial-01.proto.c data/partial-01.proto.h \
 	data/partial-02.proto.c data/partial-02.proto.h
@@ -48,6 +49,10 @@ test_scalar_03_SOURCES = test-scalar-03.c data/scalar-03.proto.c
 test_scalar_03_CFLAGS = $(common_cflags)
 test_scalar_03_LDFLAGS = $(common_ldflags)
 
+test_scalar_04_SOURCES = test-scalar-04.c data/scalar-04.proto.c
+test_scalar_04_CFLAGS = $(common_cflags)
+test_scalar_04_LDFLAGS = $(common_ldflags)
+
 test_vector_01_SOURCES = test-vector-01.c data/vector-01.proto.c
 test_vector_01_CFLAGS = $(common_cflags)
 test_vector_01_LDFLAGS = $(common_ldflags)
@@ -75,6 +80,9 @@ data/scalar-02.proto.c data/scalar-02.proto.h: data/scalar-02.proto
 
 data/scalar-03.proto.c data/scalar-03.proto.h: data/scalar-03.proto
 	$(AM_V_GEN) ../src/mrkpbc data/scalar-03.proto
+
+data/scalar-04.proto.c data/scalar-04.proto.h: data/scalar-04.proto
+	$(AM_V_GEN) ../src/mrkpbc data/scalar-04.proto
 
 data/vector-01.proto.c data/vector-01.proto.h: data/vector-01.proto
 	$(AM_V_GEN) ../src/mrkpbc data/vector-01.proto
