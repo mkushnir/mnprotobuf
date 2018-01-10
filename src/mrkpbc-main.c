@@ -114,12 +114,11 @@ main(UNUSED int argc, char **argv)
 
     } else {
         char *s0, *s1;
-        char *dname, *fname;
+        char *fname;
 
         if ((s0 = strdup(argv[0])) == NULL) {
             errx(1, "strdup error");
         }
-        dname = dirname(s0);
         if ((s1 = strdup(argv[0])) == NULL) {
             errx(1, "strdup error");
         }

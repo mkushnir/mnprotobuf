@@ -16,9 +16,10 @@
 extern "C" {
 #endif
 
-#define MRKPB_EIO    (-2)
-#define MRKPB_ESIZE  (-3)
-#define MRKPB_ETYPE  (-4)
+#define MRKPB_EIO       (-2)
+#define MRKPB_ESIZE     (-3)
+#define MRKPB_ETYPE     (-4)
+#define MRKPB_EMEMORY   (-5)
 ssize_t mrkpb_devarint(mnbytestream_t *, void *, uint64_t *);
 ssize_t mrkpb_envarint(mnbytestream_t *, uint64_t);
 ssize_t mrkpb_szvarint(uint64_t);

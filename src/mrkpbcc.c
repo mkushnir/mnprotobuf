@@ -166,6 +166,17 @@ print_header_pre(mrkpbc_ctx_t *ctx, mnbytestream_t *bs)
         "#include <mrkcommon/bytestream.h>\n"
         "#include <mrkcommon/util.h>\n\n"
         "#include <mrkprotobuf.h>\n\n"
+        "#ifdef __GNUC__\n"
+        "#  pragma GCC diagnostic ignored \"-Wunused-parameter\"\n"
+        "#  pragma GCC diagnostic ignored \"-Wunused-variable\"\n"
+        "#  pragma GCC diagnostic ignored \"-Wunused-label\"\n"
+        "#else\n"
+        "#  ifdef __clang__\n"
+        "#      pragma clang diagnostic ignored \"-Wunused-parameter\"\n"
+        "#      pragma clang diagnostic ignored \"-Wunused-variable\"\n"
+        "#      pragma clang diagnostic ignored \"-Wunused-label\"\n"
+        "#  endif\n"
+        "#endif\n"
         "#ifdef __cplusplus\n"
         "extern \"C\" {\n"
         "#endif\n\n";
@@ -178,8 +189,32 @@ print_header_pre(mrkpbc_ctx_t *ctx, mnbytestream_t *bs)
                             "#define %s_H\n\n",
                             BDATA(name),
                             BDATA(name));
-    BYTES_DECREF(&name);
     (void)bytestream_cat(bs, strlen(buf), buf);
+    (void)bytestream_nprintf(bs, 1024,
+        "#define %s_FNUM(field, ufield) %s_FNUM_ ## field ## _ ## ufield\n"
+        "#define %s_MEMBER(cont, field, ufield) ((cont)->field.data.ufield)\n"
+        "#define %s_SETFNUM(cont, field, ufield) "
+        "do { (cont)->field.fnum = %s_FNUM(field, ufield); "
+        "} while (0)\n"
+        "#define %s_SETDATA(cont, field, ufield, value) "
+        "do { %s_MEMBER(cont, field, ufield) = value; "
+        "} while (0)\n"
+        "#define %s_SET(cont, field, ufield, value) "
+        "do { (cont)->field.fnum = %s_FNUM(field, ufield); "
+        "%s_MEMBER(cont, field, ufield) = value; } while (0)\n"
+        ,
+        BDATA(name),
+        BDATA(name),
+        BDATA(name),
+        BDATA(name),
+        BDATA(name),
+        BDATA(name),
+        BDATA(name),
+        BDATA(name),
+        BDATA(name),
+        BDATA(name));
+    BYTES_DECREF(&name);
+
 }
 
 
@@ -252,23 +287,6 @@ print_field_single(mrkpbc_field_t *field, mnbytestream_t *bs, char *indent)
                         BDATA((*ufield)->be.name),
                         (*ufield)->fnum);
                 }
-
-                (void)bytestream_nprintf(bs, 1024,
-                    "#define %s_SET(cont, field, ufield, value) "
-                    "do { cont->field.fnum = %s_FNUM_ ## field ## _ ## ufield; "
-                    "cont->field.data.ufield = value; } while (0)\n"
-                    "#define %s_SETFNUM(cont, field, ufield) "
-                    "do { cont->field.fnum = %s_FNUM_ ## field ## _ ## ufield; "
-                    "} while (0)\n"
-                    "#define %s_SETDATA(cont, field, ufield, value) "
-                    "do { cont->field.data.ufield = value; "
-                    "} while (0)\n"
-                    ,
-                    BDATA(name),
-                    BDATA(name),
-                    BDATA(name),
-                    BDATA(name),
-                    BDATA(name));
 
                 BYTES_DECREF(&name);
             }
@@ -776,7 +794,7 @@ print_fini(mrkpbc_container_t *cont, mnbytestream_t *bs)
 
     (void)bytestream_nprintf(bs,
                              1024,
-                             "int\n%s_fini(UNUSED %s%s *msg)\n{\n",
+                             "int\n%s_fini(%s%s *msg)\n{\n",
                              BDATA(cont->be.fqname),
                              kw,
                              BDATA(cont->be.fqname));
@@ -1086,7 +1104,7 @@ print_pack(mrkpbc_container_t *cont, mnbytestream_t *bs)
                              "{\n"
                              "    ssize_t res = 0;\n"
                              "    ssize_t nwritten;\n"
-                             "    UNUSED size_t sz;\n\n",
+                             "    size_t sz;\n\n",
                              BDATA(cont->be.encode),
                              kw,
                              BDATA(cont->be.fqname));
@@ -1192,7 +1210,8 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             if (ucty->kind == MRKPBC_CONT_KMESSAGE) {
                 assert((*ufield)->wtype == MRKPB_WT_LDELIM);
                 (void)bytestream_nprintf(bs, 1024,
-                    "            if (wtype != %d) { res = -1; goto end; }\n"
+                    "            if (wtype != %d) { res = MRKPB_ETYPE; "
+                                    "goto end; }\n"
                     "            if ((nread = mrkpb_devarint(bs, fd, &sz)) "
                                     "< 0) { res = nread; goto end; } "
                                     "res += nread;\n"
@@ -1295,7 +1314,7 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
     } else if ((*field)->flags.repeated) {
         mrkpbc_container_t *cont;
-        char *kwf, *kwc;
+        char *kwf;
 
         /*
          * packed
@@ -1309,20 +1328,19 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
         cont = (*field)->parent;
         assert(cont!= NULL);
-        kwc = mrkpbc_container_keyword(cont);
 
         (void)bytestream_nprintf(bs, 1024,
             "        case %"PRId64":\n"
-            "            if (wtype != %d) { res = -1; goto end; }\n"
+            "            if (wtype != %d) { res = MRKPB_ETYPE; goto end; }\n"
             "            if ((nread = mrkpb_devarint(bs, fd, &sz)) < 0) { "
                             "res = nread; goto end; } res += nread;\n"
             "            for (nread_item = 0, nread = 0; "
                                 "nread_item < (ssize_t)sz; ) {\n"
             "                %s%s *item;\n"
-            "                UNUSED uint64_t etag;\n"
-            "                UNUSED uint64_t esz;\n"
+            "                uint64_t etag;\n"
+            "                uint64_t esz;\n"
             "                if ((item = %s_%s_alloc(msg, 1)) == NULL) { "
-                                "res = -1; goto end; }\n"
+                                "res = MRKPB_EMEMORY; goto end; }\n"
             ,
             (*field)->fnum,
             MRKPB_WT_LDELIM,
@@ -1374,7 +1392,7 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             assert((*field)->wtype == MRKPB_WT_LDELIM);
             (void)bytestream_nprintf(bs, 1024,
                 "        case %"PRId64":\n"
-                "            if (wtype != %d) { res = -1; goto end; }\n"
+                "            if (wtype != %d) { res = MRKPB_ETYPE; goto end; }\n"
                 "            if ((nread = mrkpb_devarint(bs, fd, &sz)) < 0) { "
                                 "res = nread; goto end; } res += nread;\n"
                 "            msg->%s._mrkpbcc_rawsz = (ssize_t)sz;\n"
@@ -1439,11 +1457,11 @@ print_unpack(mrkpbc_container_t *cont, mnbytestream_t *bs)
                              1024,
                              "ssize_t\n"
                              "%s(mnbytestream_t *bs, void *fd, "
-                             "UNUSED %s%s *msg)\n{\n"
+                             "%s%s *msg)\n{\n"
                              "    ssize_t res = 0;\n"
                              "    ssize_t nread = 0;\n"
-                             "    UNUSED ssize_t nread_item;\n"
-                             "    UNUSED uint64_t sz;\n"
+                             "    ssize_t nread_item;\n"
+                             "    uint64_t sz;\n"
                              "    while (res < msg->_mrkpbcc_rawsz) {\n"
                              "        uint64_t tag;\n"
                              "        int wtype;\n"
@@ -1627,7 +1645,7 @@ print_sz(mrkpbc_container_t *cont, mnbytestream_t *bs)
                              "size_t\n"
                              "%s(%s%s *msg)\n{\n"
                              "    ssize_t res = 0;\n"
-                             "    UNUSED ssize_t n;\n",
+                             "    ssize_t n;\n",
                              BDATA(cont->be.sz),
                              kw,
                              BDATA(cont->be.fqname));

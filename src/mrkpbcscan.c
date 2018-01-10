@@ -393,7 +393,7 @@ mrkpbc_ctx_push_container(mrkpbc_ctx_t *ctx, mrkpbc_container_t *cont)
 void
 mrkpbc_ctx_pop_container(mrkpbc_ctx_t *ctx)
 {
-    mrkpbc_container_t *cont;
+    UNUSED mrkpbc_container_t *cont;
 
     cont = mrkpbc_ctx_top_container(ctx);
     (void)array_decr(&ctx->stack);
