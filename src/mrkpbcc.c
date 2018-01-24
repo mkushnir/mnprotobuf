@@ -193,6 +193,7 @@ print_header_pre(mrkpbc_ctx_t *ctx, mnbytestream_t *bs)
     (void)bytestream_nprintf(bs, 1024,
         "#define %s_FNUM(field, ufield) %s_FNUM_ ## field ## _ ## ufield\n"
         "#define %s_MEMBER(cont, field, ufield) ((cont)->field.data.ufield)\n"
+        "#define %s_GETFNUM(cont, field) ((cont)->field.fnum)\n"
         "#define %s_SETFNUM(cont, field, ufield) "
         "do { (cont)->field.fnum = %s_FNUM(field, ufield); "
         "} while (0)\n"
@@ -203,6 +204,7 @@ print_header_pre(mrkpbc_ctx_t *ctx, mnbytestream_t *bs)
         "do { (cont)->field.fnum = %s_FNUM(field, ufield); "
         "%s_MEMBER(cont, field, ufield) = value; } while (0)\n"
         ,
+        BDATA(name),
         BDATA(name),
         BDATA(name),
         BDATA(name),
@@ -1221,7 +1223,7 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                     "            // if (nread != (ssize_t)sz) { "
                                     "res = -2; goto end; }\n"
                     "            msg->%s.fnum = %"PRId64"; "
-                    "            res += nread; break;\n",
+                                    "res += nread; break;\n",
                     (*ufield)->wtype,
                     BDATA((*field)->be.name),
                     BDATA((*ufield)->be.name),
@@ -1337,7 +1339,7 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             "            for (nread_item = 0, nread = 0; "
                                 "nread_item < (ssize_t)sz; ) {\n"
             "                %s%s *item;\n"
-            "                uint64_t etag;\n"
+            "                //uint64_t etag;\n"
             "                uint64_t esz;\n"
             "                if ((item = %s_%s_alloc(msg, 1)) == NULL) { "
                                 "res = MRKPB_EMEMORY; goto end; }\n"
@@ -1352,9 +1354,9 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
         if (cty->kind == MRKPBC_CONT_KMESSAGE) {
             (void)bytestream_nprintf(bs, 1024,
                 "                if ((nread = mrkpb_devarint(bs, fd, "
-                                    "&sz)) < 0) { "
+                                    "&esz)) < 0) { "
                                     "res = nread; goto end; } "
-                                    "item->_mrkpbcc_rawsz = sz; "
+                                    "item->_mrkpbcc_rawsz = esz; "
                                     "nread_item += nread;\n"
                 );
             (void)bytestream_nprintf(bs, 1024,
@@ -1747,7 +1749,7 @@ print_dump_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             (void)bytestream_nprintf(bs, 1024,
                 "    case %"PRId64":\n"
                 "        res += bytestream_nprintf(bs, 1024, "
-                            "\"%"PRId64":%s:%s:\");\n"
+                            "\"%"PRId64":%s:%s=\");\n"
                 "        res += %s(bs, %smsg->%s.data.%s);\n"
                 "        break;\n",
                 (*ufield)->fnum,

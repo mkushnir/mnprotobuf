@@ -991,6 +991,7 @@ mrkpb_unpack_string(mnbytestream_t *bs, void *fd, int wtype, mnbytes_t **value)
     if (wtype == MRKPB_WT_LDELIM) {
         BYTES_DECREF(value);
         nread = mrkpb_destr(bs, fd, value);
+        BYTES_INCREF(*value);
 
     } else {
         nread = MRKPB_ETYPE;
@@ -1014,6 +1015,7 @@ mrkpb_unpack_bytes(mnbytestream_t *bs, void *fd, int wtype, mnbytes_t **value)
     if (wtype == MRKPB_WT_LDELIM) {
         BYTES_DECREF(value);
         nread = mrkpb_debytes(bs, fd, value);
+        BYTES_INCREF(*value);
 
     } else {
         nread = MRKPB_ETYPE;
