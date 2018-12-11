@@ -27,43 +27,63 @@ EXTRA_DIST = $(diags) $(data)
 
 #noinst_HEADERS = ../src/mrkprotobuf.h
 
+DEBUG_LD_FLAGS =
 if DEBUG
-DEBUG_FLAGS = -g -O0 @CC_DEBUG@
+DEBUG_CC_FLAGS = -g -O0 @CC_DEBUG@
+DEBUG_LD_FLAGS += -no-install
 else
-DEBUG_FLAGS = -DNDEBUG -O3
+DEBUG_CC_FLAGS = -DNDEBUG -O3 -fomit-frame-pointer
+if LTO
+DEBUG_CC_FLAGS += @CC_LTO@
+DEBUG_LD_FLAGS += @LD_LTO@
+endif
 endif
 
-common_cflags = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ -I$(top_srcdir)/test -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir) -DPACKAGE_ROOT="\"$(top_srcdir)\""
+if ALLSTATIC
+common_ldflags = -all-static
+else
+common_ldflags =
+endif
 
-common_ldflags = -L$(top_srcdir)/src/.libs -lmrkprotobuf -L$(libdir) -lmrkcommon -lmndiag
+common_cflags = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/test -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir) -DPACKAGE_ROOT="\"$(top_srcdir)\""
+
+common_ldflags += $(DEBUG_LD_FLAGS) -L$(top_srcdir)/src/.libs -L$(libdir)
+common_ldadd = -lmrkprotobuf -lmrkcommon -lmndiag
 
 test_scalar_01_SOURCES = test-scalar-01.c data/scalar-01.proto.c
 test_scalar_01_CFLAGS = $(common_cflags)
 test_scalar_01_LDFLAGS = $(common_ldflags)
+test_scalar_01_LDADD = $(common_ldadd)
 
 test_scalar_02_SOURCES = test-scalar-02.c data/scalar-02.proto.c
 test_scalar_02_CFLAGS = $(common_cflags)
 test_scalar_02_LDFLAGS = $(common_ldflags)
+test_scalar_02_LDADD = $(common_ldadd)
 
 test_scalar_03_SOURCES = test-scalar-03.c data/scalar-03.proto.c
 test_scalar_03_CFLAGS = $(common_cflags)
 test_scalar_03_LDFLAGS = $(common_ldflags)
+test_scalar_03_LDADD = $(common_ldadd)
 
 test_scalar_04_SOURCES = test-scalar-04.c data/scalar-04.proto.c
 test_scalar_04_CFLAGS = $(common_cflags)
 test_scalar_04_LDFLAGS = $(common_ldflags)
+test_scalar_04_LDADD = $(common_ldadd)
 
 test_vector_01_SOURCES = test-vector-01.c data/vector-01.proto.c
 test_vector_01_CFLAGS = $(common_cflags)
 test_vector_01_LDFLAGS = $(common_ldflags)
+test_vector_01_LDADD = $(common_ldadd)
 
 test_partial_01_SOURCES = test-partial-01.c data/partial-01.proto.c
 test_partial_01_CFLAGS = $(common_cflags)
 test_partial_01_LDFLAGS = $(common_ldflags)
+test_partial_01_LDADD = $(common_ldadd)
 
 test_partial_02_SOURCES = test-partial-02.c data/partial-02.proto.c
 test_partial_02_CFLAGS = $(common_cflags)
 test_partial_02_LDFLAGS = $(common_ldflags)
+test_partial_02_LDADD = $(common_ldadd)
 
 diags = diag.txt
 

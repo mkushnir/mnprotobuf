@@ -28,22 +28,34 @@ mrkpbc_SOURCES = mrkpbcg.y mrkpbcl.l mrkpbcscan.c mrkpbcc.c mrkpbc-main.c
 
 diags = diag.txt
 
+DEBUG_LD_FLAGS =
 if DEBUG
-DEBUG_FLAGS = -g -O0 @CC_DEBUG@
+DEBUG_CC_FLAGS = -g -O0 @CC_DEBUG@
+DEBUG_LD_FLAGS += -no-install
 else
-DEBUG_FLAGS = -DNDEBUG -O3
+DEBUG_CC_FLAGS = -DNDEBUG -O3 -fomit-frame-pointer
+if LTO
+DEBUG_CC_FLAGS += @CC_LTO@
+DEBUG_LD_FLAGS += @LD_LTO@
+endif
 endif
 
-libmrkprotobuf_la_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
+if ALLSTATIC
+libmrkprotobuf_la_LDFLAGS = -all-static
+mrkpbc_LDFLAGS = -all-static
+else
+libmrkprotobuf_la_LDFLAGS =
+mrkpbc_LDFLAGS =
+endif
 
-#libmrkprotobuf_la_LDFLAGS = -version-info 0:0:0
-libmrkprotobuf_la_LDFLAGS = -version-info 0:0:0 -L$(libdir) -lmrkcommon
-#libmrkprotobuf_la_LDFLAGS = -all-static
-#libmrkprotobuf_la_LDFLAGS = -all-static -Wl,-Bdynamic,-L$(libdir),-lfoo -lqwe,-Bstatic
+libmrkprotobuf_la_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 
-mrkpbc_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ -I$(top_srcdir)/test -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
-#mrkpbc_LDFLAGS = -L$(libdir) -lmrkcommon -L$(top_srcdir)/src/.libs -lmrkprotobuf
-mrkpbc_LDFLAGS = -L$(libdir) -lmrkcommon -lmndiag -lfl
+libmrkprotobuf_la_LDFLAGS += $(DEBUG_LD_FLAGS) -version-info 0:0:0 -L$(libdir)
+libmrkprotobuf_la_LIBADD = -lmrkcommon -lmndiag
+
+mrkpbc_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/test -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
+mrkpbc_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(libdir)
+mrkpbc_LDADD = -lmrkcommon -lmndiag -lfl
 
 SUBDIRS = .
 

@@ -56,12 +56,17 @@ mrkpb_devarint(mnbytestream_t *bs, void *fd, uint64_t *v)
         c = *SPDATA(bs);
 
         if (c & 0x80) {
-            c &= 0x7f;
-            (*v) |= (c << (7 * i));
+            uint64_t cc;
+
+            cc = c & 0x7f;
+            (*v) |= (cc << (7 * i));
             ++res;
             SINCR(bs);
         } else {
-            (*v) |= (c << (7 * i));
+            uint64_t cc;
+
+            cc = c;
+            (*v) |= (cc << (7 * i));
             ++res;
             SINCR(bs);
             break;
@@ -179,7 +184,7 @@ mrkpb_enzz32(mnbytestream_t *bs, int32_t v)
 {
     uint64_t vv;
 
-    vv = (uint64_t)(uint32_t)((v << 1) ^ (v >> 31));
+    vv = (uint64_t)((((uint32_t)v) << 1) ^ (((uint32_t)v) >> 31));
     return mrkpb_envarint(bs, vv);
 }
 
@@ -187,8 +192,10 @@ mrkpb_enzz32(mnbytestream_t *bs, int32_t v)
 ssize_t
 mrkpb_szzz32(int32_t v)
 {
-    v = (v << 1) ^ (v >> 31);
-    return mrkpb_szvarint((uint64_t)(uint32_t)v);
+    uint64_t vv;
+
+    vv = (uint64_t)((((uint32_t)v) << 1) ^ (((uint32_t)v) >> 31));
+    return mrkpb_szvarint(v);
 }
 
 
