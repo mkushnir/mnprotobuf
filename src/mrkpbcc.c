@@ -118,7 +118,7 @@ get_field_signature(mrkpbc_field_t *field)
         name = "data";
     } else {
         rep = " ";
-        name = (char *)BDATA(field->be.name);
+        name = BCDATA(field->be.name);
     }
 
     if (field->cty == NULL) {

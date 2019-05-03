@@ -133,10 +133,10 @@ main(UNUSED int argc, char **argv)
             errx(1, "fopen error on argv[0]");
         }
 
-        if ((out0 = fopen((char *)BDATA(nameout0), "w")) == NULL) {
+        if ((out0 = fopen(BCDATA(nameout0), "w")) == NULL) {
             errx(1, "fopen error on hfile");
         }
-        if ((out1 = fopen((char *)BDATA(nameout1), "w")) == NULL) {
+        if ((out1 = fopen(BCDATA(nameout1), "w")) == NULL) {
             errx(1, "fopen error on hfile");
         }
 

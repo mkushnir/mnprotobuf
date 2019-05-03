@@ -496,7 +496,7 @@ mrkpb_enbytes(mnbytestream_t *bs, mnbytes_t *v)
     if ((res0 = mrkpb_envarint(bs, BSZ(v))) < 0) {
         goto end;
     }
-    if ((res1 = bytestream_cat(bs, BSZ(v), (char *)BDATA(v))) < 0) {
+    if ((res1 = bytestream_cat(bs, BSZ(v), BCDATA(v))) < 0) {
         res0 = MRKPB_EIO;
         goto end;
     }
@@ -524,7 +524,7 @@ mrkpb_enstr(mnbytestream_t *bs, mnbytes_t *v)
     if ((res0 = mrkpb_envarint(bs, sz)) < 0) {
         goto end;
     }
-    if ((res1 = bytestream_cat(bs, sz, (char *)BDATA(v))) < 0) {
+    if ((res1 = bytestream_cat(bs, sz, BCDATA(v))) < 0) {
         res0 = MRKPB_EIO;
         goto end;
     }
