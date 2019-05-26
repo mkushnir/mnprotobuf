@@ -55,7 +55,7 @@ libmrkprotobuf_la_LIBADD = -lmrkcommon -lmndiag
 
 mrkpbc_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/test -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 mrkpbc_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(libdir)
-mrkpbc_LDADD = -lmrkcommon -lmndiag -lfl
+mrkpbc_LDADD = -lmrkcommon -lmndiag $(LEXLIB)
 
 SUBDIRS = .
 
