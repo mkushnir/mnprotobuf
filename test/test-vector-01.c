@@ -7,7 +7,7 @@
 
 #include <mrkprotobuf.h>
 
-#include "data/vector-01.proto.h"
+#include "data/vector-01.h"
 
 #include "unittest.h"
 

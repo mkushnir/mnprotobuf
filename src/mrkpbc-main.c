@@ -71,7 +71,10 @@ main(UNUSED int argc, char **argv)
 #   endif
 #endif
 
-    while ((ch = getopt_long(argc, argv, "h", longopts, NULL)) != -1) {
+    nameout0 = NULL;
+    nameout1 = NULL;
+
+    while ((ch = getopt_long(argc, argv, "hH:C:", longopts, NULL)) != -1) {
         switch (ch) {
         case 'h':
             usage(argv[0]);
@@ -82,6 +85,14 @@ main(UNUSED int argc, char **argv)
             /* missing option argument */
             usage(argv[0]);
             errx(1, "Missing option argument");
+            break;
+
+        case 'H':
+            nameout0 = bytes_new_from_str(optarg);
+            break;
+
+        case 'C':
+            nameout1 = bytes_new_from_str(optarg);
             break;
 
         case '?':
@@ -126,8 +137,12 @@ main(UNUSED int argc, char **argv)
 
         namein = bytes_new_from_str(fname);
 
-        nameout0 = bytes_printf("%s.h", argv[0]);
-        nameout1 = bytes_printf("%s.c", argv[0]);
+        if (nameout0 == NULL) {
+            nameout0 = bytes_printf("%s.h", argv[0]);
+        }
+        if (nameout1 == NULL) {
+            nameout1 = bytes_printf("%s.c", argv[0]);
+        }
 
         if ((in = fopen(argv[0], "r")) == NULL) {
             errx(1, "fopen error on argv[0]");

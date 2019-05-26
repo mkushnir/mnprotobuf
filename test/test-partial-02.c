@@ -7,7 +7,7 @@
 
 #include <mrkprotobuf.h>
 
-#include "data/partial-02.proto.h"
+#include "data/partial-02.h"
 
 #include "unittest.h"
 

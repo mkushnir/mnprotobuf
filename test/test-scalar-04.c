@@ -7,7 +7,7 @@
 
 #include <mrkprotobuf.h>
 
-#include "data/scalar-04.proto.h"
+#include "data/scalar-04.h"
 
 #include "unittest.h"
 
