@@ -967,7 +967,7 @@ mrkpb_unpack_bool(mnbytestream_t *bs, void *fd, int wtype, bool *value)
     }
 
     if (wtype == MRKPB_WT_VARINT) {
-        uint64_t v;
+        uint64_t v = 0;
 
         if ((nread = mrkpb_devarint(bs, fd, &v)) < 0) {
             goto end;
@@ -975,13 +975,13 @@ mrkpb_unpack_bool(mnbytestream_t *bs, void *fd, int wtype, bool *value)
         *value = (bool)v;
 
     } else if (wtype == MRKPB_WT_32BIT) {
-        uint32_t v;
+        uint32_t v = 0;
 
         nread = mrkpb_defi32(bs, fd, &v);
         *value = (bool)v;
 
     } else if (wtype == MRKPB_WT_64BIT) {
-        uint64_t v;
+        uint64_t v = 0;
 
         nread = mrkpb_defi64(bs, fd, &v);
         *value = (bool)v;
