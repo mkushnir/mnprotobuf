@@ -1968,7 +1968,7 @@ analyze_backend1(mrkpbc_container_t *cont)
 
 
 static int
-analyze_backend0(UNUSED mnbytes_t *key, mrkpbc_container_t *cont)
+analyze_backend0(UNUSED mnbytes_t *key, mrkpbc_container_t *cont, UNUSED void *udata)
 {
     /*
      * top-level containers only
