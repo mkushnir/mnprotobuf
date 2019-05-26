@@ -14,6 +14,16 @@
 /*
  * protocol buffer runtime
  */
+#ifndef HAVE_FLSL
+#   ifdef __GNUC__
+#       define flsl(v) (v ? ((sizeof(long) * 8) - __builtin_clzl(v)) : 0)
+#       define flsll(v) (v ? ((sizeof(long long) * 8) - __builtin_clzl(v)) : 0)
+#       define fls(v) (v ? ((sizeof(int) * 8) - __builtin_clzl(v)) : 0)
+#   else
+#       error "Could not find/define flsl."
+#   endif
+#endif
+
 #if __STDC_VERSION__ >= 201112
 #   define MNFLS(v)                    \
     _Generic(v,                        \
@@ -192,7 +202,7 @@ mrkpb_enzz32(mnbytestream_t *bs, int32_t v)
 ssize_t
 mrkpb_szzz32(int32_t v)
 {
-    uint64_t vv;
+    UNUSED uint64_t vv;
 
     vv = (uint64_t)((((uint32_t)v) << 1) ^ (((uint32_t)v) >> 31));
     return mrkpb_szvarint(v);
