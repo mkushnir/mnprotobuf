@@ -15,7 +15,7 @@
  * protocol buffer runtime
  */
 #ifndef HAVE_FLSL
-#   ifdef __GNUC__
+#   ifdef __GCC__
 #       define flsl(v) (v ? ((sizeof(long) * 8) - __builtin_clzl(v)) : 0)
 #       define flsll(v) (v ? ((sizeof(long long) * 8) - __builtin_clzl(v)) : 0)
 #       define fls(v) (v ? ((sizeof(int) * 8) - __builtin_clzl(v)) : 0)

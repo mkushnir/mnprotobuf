@@ -166,7 +166,7 @@ print_header_pre(mrkpbc_ctx_t *ctx, mnbytestream_t *bs)
         "#include <mrkcommon/bytestream.h>\n"
         "#include <mrkcommon/util.h>\n\n"
         "#include <mrkprotobuf.h>\n\n"
-        "#ifdef __GNUC__\n"
+        "#ifdef __GCC__\n"
         "#  pragma GCC diagnostic ignored \"-Wunused-parameter\"\n"
         "#  pragma GCC diagnostic ignored \"-Wunused-variable\"\n"
         "#  pragma GCC diagnostic ignored \"-Wunused-label\"\n"
