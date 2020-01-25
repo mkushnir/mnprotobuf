@@ -3,11 +3,11 @@
 #include <sys/types.h>
 #include <inttypes.h>
 
-#include <mrkcommon/bytestream.h>
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
+#include <mncommon/bytestream.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
 
-#include "mrkprotobuf_private.h"
+#include "mnprotobuf_private.h"
 
 #include "diag.h"
 
@@ -39,10 +39,10 @@
 #   define MNFLS(v) flsl((long)(v))
 #endif
 
-void mndiag_mrkcommon_str(int, char *, size_t);
+void mndiag_mncommon_str(int, char *, size_t);
 
 ssize_t
-mrkpb_devarint(mnbytestream_t *bs, void *fd, uint64_t *v)
+mnpb_devarint(mnbytestream_t *bs, void *fd, uint64_t *v)
 {
     ssize_t res;
     int i;
@@ -56,9 +56,9 @@ mrkpb_devarint(mnbytestream_t *bs, void *fd, uint64_t *v)
         if (SNEEDMORE(bs)) {
             if ((res = bytestream_consume_data(bs, fd)) != 0) {
                 //char buf[64];
-                //mndiag_mrkcommon_str(res, buf, sizeof(buf));
+                //mndiag_mncommon_str(res, buf, sizeof(buf));
                 //TRACE("res=%s", buf);
-                res = MRKPB_EIO;
+                res = MNPB_EIO;
                 goto end;
             }
         }
@@ -90,7 +90,7 @@ end:
 
 
 ssize_t
-mrkpb_envarint(mnbytestream_t *bs, uint64_t v)
+mnpb_envarint(mnbytestream_t *bs, uint64_t v)
 {
     ssize_t res;
 
@@ -115,7 +115,7 @@ mrkpb_envarint(mnbytestream_t *bs, uint64_t v)
 
 
 ssize_t
-mrkpb_szvarint(uint64_t v)
+mnpb_szvarint(uint64_t v)
 {
     ssize_t res;
 
@@ -134,90 +134,90 @@ mrkpb_szvarint(uint64_t v)
 
 
 ssize_t
-mrkpb_dumpvarint(mnbytestream_t *bs, uint64_t v)
+mnpb_dumpvarint(mnbytestream_t *bs, uint64_t v)
 {
     return bytestream_nprintf(bs, 64, "%"PRId64, v);
 }
 
 
 ssize_t
-mrkpb_dezz64(mnbytestream_t *bs, void *fd, int64_t *v)
+mnpb_dezz64(mnbytestream_t *bs, void *fd, int64_t *v)
 {
     ssize_t res;
     uint64_t vv;
 
-    res = mrkpb_devarint(bs, fd, &vv);
+    res = mnpb_devarint(bs, fd, &vv);
     *v = (int64_t)((vv >> 1) ^ ((int64_t)(vv << 63) >> 63));
     return res;
 }
 
 
 ssize_t
-mrkpb_enzz64(mnbytestream_t *bs, int64_t v)
+mnpb_enzz64(mnbytestream_t *bs, int64_t v)
 {
     uint64_t vv;
 
     vv = (uint64_t)((v << 1) ^ (v >> 63));
-    return mrkpb_envarint(bs, vv);
+    return mnpb_envarint(bs, vv);
 }
 
 
 ssize_t
-mrkpb_szzz64(int64_t v)
+mnpb_szzz64(int64_t v)
 {
     v = (v << 1) ^ (v >> 63);
-    return mrkpb_szvarint((uint64_t)v);
+    return mnpb_szvarint((uint64_t)v);
 }
 
 
 ssize_t
-mrkpb_dumpzz64(mnbytestream_t *bs, int64_t v)
+mnpb_dumpzz64(mnbytestream_t *bs, int64_t v)
 {
     return bytestream_nprintf(bs, 64, "%"PRId64, v);
 }
 
 
 ssize_t
-mrkpb_dezz32(mnbytestream_t *bs, void *fd, int32_t *v)
+mnpb_dezz32(mnbytestream_t *bs, void *fd, int32_t *v)
 {
     ssize_t res;
     uint64_t vv;
 
-    res = mrkpb_devarint(bs, fd, &vv);
+    res = mnpb_devarint(bs, fd, &vv);
     *v = ((uint32_t)vv >> 1) ^ ((int32_t)(vv << 31) >> 31);
     return res;
 }
 
 
 ssize_t
-mrkpb_enzz32(mnbytestream_t *bs, int32_t v)
+mnpb_enzz32(mnbytestream_t *bs, int32_t v)
 {
     uint64_t vv;
 
     vv = (uint64_t)((((uint32_t)v) << 1) ^ (((uint32_t)v) >> 31));
-    return mrkpb_envarint(bs, vv);
+    return mnpb_envarint(bs, vv);
 }
 
 
 ssize_t
-mrkpb_szzz32(int32_t v)
+mnpb_szzz32(int32_t v)
 {
     UNUSED uint64_t vv;
 
     vv = (uint64_t)((((uint32_t)v) << 1) ^ (((uint32_t)v) >> 31));
-    return mrkpb_szvarint(v);
+    return mnpb_szvarint(v);
 }
 
 
 ssize_t
-mrkpb_dumpzz32(mnbytestream_t *bs, int32_t v)
+mnpb_dumpzz32(mnbytestream_t *bs, int32_t v)
 {
     return bytestream_nprintf(bs, 64, "%"PRId32, v);
 }
 
 
 ssize_t
-mrkpb_defi64(mnbytestream_t *bs, void *fd, uint64_t *v)
+mnpb_defi64(mnbytestream_t *bs, void *fd, uint64_t *v)
 {
     ssize_t res;
     union {
@@ -229,8 +229,8 @@ mrkpb_defi64(mnbytestream_t *bs, void *fd, uint64_t *v)
 
     while (SAVAIL(bs) < (ssize_t)sizeof(uint64_t)) {
         if ((res = bytestream_consume_data(bs, fd)) != 0) {
-            //TRACE("res=%s", mrkcommon_diag_str(res));
-            res = MRKPB_EIO;
+            //TRACE("res=%s", mncommon_diag_str(res));
+            res = MNPB_EIO;
             goto end;
         }
     }
@@ -246,7 +246,7 @@ end:
 
 
 ssize_t
-mrkpb_enfi64(mnbytestream_t *bs, uint64_t v)
+mnpb_enfi64(mnbytestream_t *bs, uint64_t v)
 {
     SCATI64(bs, v);
     return sizeof(uint64_t);
@@ -254,21 +254,21 @@ mrkpb_enfi64(mnbytestream_t *bs, uint64_t v)
 
 
 ssize_t
-mrkpb_szfi64(uint64_t v)
+mnpb_szfi64(uint64_t v)
 {
     return sizeof(v);
 }
 
 
 ssize_t
-mrkpb_dumpfi64(mnbytestream_t *bs, uint64_t v)
+mnpb_dumpfi64(mnbytestream_t *bs, uint64_t v)
 {
     return bytestream_nprintf(bs, 64, "%"PRIu64, v);
 }
 
 
 ssize_t
-mrkpb_defi32(mnbytestream_t *bs, void *fd, uint32_t *v)
+mnpb_defi32(mnbytestream_t *bs, void *fd, uint32_t *v)
 {
     ssize_t res;
     union {
@@ -280,8 +280,8 @@ mrkpb_defi32(mnbytestream_t *bs, void *fd, uint32_t *v)
 
     while (SAVAIL(bs) < (ssize_t)sizeof(uint32_t)) {
         if ((res = bytestream_consume_data(bs, fd)) != 0) {
-            //TRACE("res=%s", mrkcommon_diag_str(res));
-            res = MRKPB_EIO;
+            //TRACE("res=%s", mncommon_diag_str(res));
+            res = MNPB_EIO;
             goto end;
         }
     }
@@ -297,7 +297,7 @@ end:
 
 
 ssize_t
-mrkpb_enfi32(mnbytestream_t *bs, uint32_t v)
+mnpb_enfi32(mnbytestream_t *bs, uint32_t v)
 {
     SCATI32(bs, v);
     return sizeof(uint32_t);
@@ -305,21 +305,21 @@ mrkpb_enfi32(mnbytestream_t *bs, uint32_t v)
 
 
 ssize_t
-mrkpb_szfi32(uint32_t v)
+mnpb_szfi32(uint32_t v)
 {
     return sizeof(v);
 }
 
 
 ssize_t
-mrkpb_dumpfi32(mnbytestream_t *bs, uint32_t v)
+mnpb_dumpfi32(mnbytestream_t *bs, uint32_t v)
 {
     return bytestream_nprintf(bs, 64, "%"PRIu32, v);
 }
 
 
 ssize_t
-mrkpb_dedouble(mnbytestream_t *bs, void *fd, double *v)
+mnpb_dedouble(mnbytestream_t *bs, void *fd, double *v)
 {
     ssize_t res;
     union {
@@ -331,8 +331,8 @@ mrkpb_dedouble(mnbytestream_t *bs, void *fd, double *v)
 
     while (SAVAIL(bs) < (ssize_t)sizeof(double)) {
         if ((res = bytestream_consume_data(bs, fd)) != 0) {
-            //TRACE("res=%s", mrkcommon_diag_str(res));
-            res = MRKPB_EIO;
+            //TRACE("res=%s", mncommon_diag_str(res));
+            res = MNPB_EIO;
             goto end;
         }
     }
@@ -348,7 +348,7 @@ end:
 
 
 ssize_t
-mrkpb_endouble(mnbytestream_t *bs, double v)
+mnpb_endouble(mnbytestream_t *bs, double v)
 {
     SCATD(bs, v);
     return sizeof(double);
@@ -356,21 +356,21 @@ mrkpb_endouble(mnbytestream_t *bs, double v)
 
 
 ssize_t
-mrkpb_szdouble(double v)
+mnpb_szdouble(double v)
 {
     return sizeof(v);
 }
 
 
 ssize_t
-mrkpb_dumpdouble(mnbytestream_t *bs, double v)
+mnpb_dumpdouble(mnbytestream_t *bs, double v)
 {
     return bytestream_nprintf(bs, 512, "%lg", v);
 }
 
 
 ssize_t
-mrkpb_defloat(mnbytestream_t *bs, void *fd, float *v)
+mnpb_defloat(mnbytestream_t *bs, void *fd, float *v)
 {
     ssize_t res;
     union {
@@ -382,8 +382,8 @@ mrkpb_defloat(mnbytestream_t *bs, void *fd, float *v)
 
     while (SAVAIL(bs) < (ssize_t)sizeof(float)) {
         if ((res = bytestream_consume_data(bs, fd)) != 0) {
-            //TRACE("res=%s", mrkcommon_diag_str(res));
-            res = MRKPB_EIO;
+            //TRACE("res=%s", mncommon_diag_str(res));
+            res = MNPB_EIO;
             goto end;
         }
     }
@@ -399,7 +399,7 @@ end:
 
 
 ssize_t
-mrkpb_enfloat(mnbytestream_t *bs, float v)
+mnpb_enfloat(mnbytestream_t *bs, float v)
 {
     SCATF(bs, v);
     return sizeof(float);
@@ -407,30 +407,30 @@ mrkpb_enfloat(mnbytestream_t *bs, float v)
 
 
 ssize_t
-mrkpb_szfloat(float v)
+mnpb_szfloat(float v)
 {
     return sizeof(v);
 }
 
 
 ssize_t
-mrkpb_dumpfloat(mnbytestream_t *bs, float v)
+mnpb_dumpfloat(mnbytestream_t *bs, float v)
 {
     return bytestream_nprintf(bs, 512, "%g", v);
 }
 
 
 ssize_t
-mrkpb_debytes(mnbytestream_t *bs, void *fd, mnbytes_t **v)
+mnpb_debytes(mnbytestream_t *bs, void *fd, mnbytes_t **v)
 {
     ssize_t res;
     ssize_t sz;
 
-    if ((res = mrkpb_devarint(bs, fd, (uint64_t *)&sz)) < 0) {
+    if ((res = mnpb_devarint(bs, fd, (uint64_t *)&sz)) < 0) {
         goto end;
     }
-    if (sz > MRKPB_MAX_BYTES) {
-        res = MRKPB_ESIZE;
+    if (sz > MNPB_MAX_BYTES) {
+        res = MNPB_ESIZE;
         goto end;
     }
 
@@ -441,8 +441,8 @@ mrkpb_debytes(mnbytestream_t *bs, void *fd, mnbytes_t **v)
 
     while (SAVAIL(bs) < sz) {
         if ((res = bytestream_consume_data(bs, fd)) != 0) {
-            //TRACE("res=%s", mrkcommon_diag_str(res));
-            res = MRKPB_EIO;
+            //TRACE("res=%s", mncommon_diag_str(res));
+            res = MNPB_EIO;
             goto end;
         }
     }
@@ -458,16 +458,16 @@ end:
 
 
 ssize_t
-mrkpb_destr(mnbytestream_t *bs, void *fd, mnbytes_t **v)
+mnpb_destr(mnbytestream_t *bs, void *fd, mnbytes_t **v)
 {
     ssize_t res;
     ssize_t sz;
 
-    if ((res = mrkpb_devarint(bs, fd, (uint64_t *)&sz)) < 0) {
+    if ((res = mnpb_devarint(bs, fd, (uint64_t *)&sz)) < 0) {
         goto end;
     }
-    if (sz > MRKPB_MAX_BYTES) {
-        res = MRKPB_ESIZE;
+    if (sz > MNPB_MAX_BYTES) {
+        res = MNPB_ESIZE;
         goto end;
     }
 
@@ -478,8 +478,8 @@ mrkpb_destr(mnbytestream_t *bs, void *fd, mnbytes_t **v)
 
     while (SAVAIL(bs) < sz) {
         if ((res = bytestream_consume_data(bs, fd)) != 0) {
-            //TRACE("res=%s", mrkcommon_diag_str(res));
-            res = MRKPB_EIO;
+            //TRACE("res=%s", mncommon_diag_str(res));
+            res = MNPB_EIO;
             goto end;
         }
     }
@@ -495,7 +495,7 @@ end:
 
 
 ssize_t
-mrkpb_enbytes(mnbytestream_t *bs, mnbytes_t *v)
+mnpb_enbytes(mnbytestream_t *bs, mnbytes_t *v)
 {
     ssize_t res0, res1;
 
@@ -503,11 +503,11 @@ mrkpb_enbytes(mnbytestream_t *bs, mnbytes_t *v)
         return 0;
     }
 
-    if ((res0 = mrkpb_envarint(bs, BSZ(v))) < 0) {
+    if ((res0 = mnpb_envarint(bs, BSZ(v))) < 0) {
         goto end;
     }
     if ((res1 = bytestream_cat(bs, BSZ(v), BCDATA(v))) < 0) {
-        res0 = MRKPB_EIO;
+        res0 = MNPB_EIO;
         goto end;
     }
     res0 += res1;
@@ -519,7 +519,7 @@ end:
 
 
 ssize_t
-mrkpb_enstr(mnbytestream_t *bs, mnbytes_t *v)
+mnpb_enstr(mnbytestream_t *bs, mnbytes_t *v)
 {
     ssize_t res0, res1;
     uint64_t sz;
@@ -531,11 +531,11 @@ mrkpb_enstr(mnbytestream_t *bs, mnbytes_t *v)
     assert(BSZ(v) > 0);
     sz = BSZ(v) - 1;
 
-    if ((res0 = mrkpb_envarint(bs, sz)) < 0) {
+    if ((res0 = mnpb_envarint(bs, sz)) < 0) {
         goto end;
     }
     if ((res1 = bytestream_cat(bs, sz, BCDATA(v))) < 0) {
-        res0 = MRKPB_EIO;
+        res0 = MNPB_EIO;
         goto end;
     }
     res0 += res1;
@@ -547,27 +547,27 @@ end:
 
 
 ssize_t
-mrkpb_szbytes(mnbytes_t *s)
+mnpb_szbytes(mnbytes_t *s)
 {
     if (s == NULL) {
         return 0;
     }
-    return mrkpb_szvarint(BSZ(s)) + BSZ(s);
+    return mnpb_szvarint(BSZ(s)) + BSZ(s);
 }
 
 
 ssize_t
-mrkpb_szstr(mnbytes_t *s)
+mnpb_szstr(mnbytes_t *s)
 {
     if (s == NULL) {
         return 0;
     }
-    return mrkpb_szvarint(BSZ(s) - 1) + BSZ(s) - 1;
+    return mnpb_szvarint(BSZ(s) - 1) + BSZ(s) - 1;
 }
 
 
 ssize_t
-mrkpb_dumpbytes(mnbytestream_t *bs, mnbytes_t *v)
+mnpb_dumpbytes(mnbytestream_t *bs, mnbytes_t *v)
 {
     if (v == NULL) {
         return 0;
@@ -578,7 +578,7 @@ mrkpb_dumpbytes(mnbytestream_t *bs, mnbytes_t *v)
 
 
 ssize_t
-mrkpb_dumpstr(mnbytestream_t *bs, mnbytes_t *v)
+mnpb_dumpstr(mnbytestream_t *bs, mnbytes_t *v)
 {
     if (v == NULL) {
         return 0;
@@ -589,7 +589,7 @@ mrkpb_dumpstr(mnbytestream_t *bs, mnbytes_t *v)
 
 
 ssize_t
-mrkpb_deldelim(mnbytestream_t *bs,
+mnpb_deldelim(mnbytestream_t *bs,
                void *fd,
                ssize_t (*cb)(mnbytestream_t *, void *, ssize_t, void *),
                void *udata)
@@ -597,11 +597,11 @@ mrkpb_deldelim(mnbytestream_t *bs,
     ssize_t res;
     ssize_t sz;
 
-    if ((res = mrkpb_devarint(bs, fd, (uint64_t *)&sz)) < 0) {
+    if ((res = mnpb_devarint(bs, fd, (uint64_t *)&sz)) < 0) {
         goto end;
     }
-    if (sz > MRKPB_MAX_BYTES) {
-        res = MRKPB_ESIZE;
+    if (sz > MNPB_MAX_BYTES) {
+        res = MNPB_ESIZE;
         goto end;
     }
 
@@ -613,19 +613,19 @@ end:
 
 
 ssize_t
-mrkpb_enldelim(mnbytestream_t *bs,
+mnpb_enldelim(mnbytestream_t *bs,
                size_t sz,
                ssize_t (*cb)(mnbytestream_t *, ssize_t, void *),
                void *udata)
 {
     ssize_t res0, res1;
 
-    if ((res0 = mrkpb_envarint(bs, sz)) < 0) {
+    if ((res0 = mnpb_envarint(bs, sz)) < 0) {
         goto end;
     }
 
     if ((res1 = cb(bs, sz, udata)) < 0) {
-        res0 = MRKPB_EIO;
+        res0 = MNPB_EIO;
         goto end;
     }
 
@@ -642,27 +642,27 @@ end:
 
 
 ssize_t
-mrkpb_unpack_double(mnbytestream_t *bs, void *fd, int wtype, double *value)
+mnpb_unpack_double(mnbytestream_t *bs, void *fd, int wtype, double *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_64BIT;
+        wtype = MNPB_WT_64BIT;
     }
 
-    if (wtype == MRKPB_WT_64BIT) {
-        nread = mrkpb_dedouble(bs, fd, value);
+    if (wtype == MNPB_WT_64BIT) {
+        nread = mnpb_dedouble(bs, fd, value);
 
-    } else if (wtype == MRKPB_WT_32BIT) {
+    } else if (wtype == MNPB_WT_32BIT) {
         float v;
 
-        if ((nread = mrkpb_defloat(bs, fd, &v)) < 0) {
+        if ((nread = mnpb_defloat(bs, fd, &v)) < 0) {
             goto end;
         }
         *value = v;
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -672,27 +672,27 @@ end:
 
 
 ssize_t
-mrkpb_unpack_float(mnbytestream_t *bs, void *fd, int wtype, float *value)
+mnpb_unpack_float(mnbytestream_t *bs, void *fd, int wtype, float *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_32BIT;
+        wtype = MNPB_WT_32BIT;
     }
 
-    if (wtype == MRKPB_WT_32BIT) {
-        nread = mrkpb_defloat(bs, fd, value);
+    if (wtype == MNPB_WT_32BIT) {
+        nread = mnpb_defloat(bs, fd, value);
 
-    } else if (wtype == MRKPB_WT_64BIT) {
+    } else if (wtype == MNPB_WT_64BIT) {
         double v;
 
-        if ((nread = mrkpb_dedouble(bs, fd, &v)) < 0) {
+        if ((nread = mnpb_dedouble(bs, fd, &v)) < 0) {
             goto end;
         }
         *value = v;
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -702,41 +702,41 @@ end:
 
 
 ssize_t
-mrkpb_pack_int32(mnbytestream_t *bs, int32_t v)
+mnpb_pack_int32(mnbytestream_t *bs, int32_t v)
 {
-    return mrkpb_envarint(bs, (uint32_t)v);
+    return mnpb_envarint(bs, (uint32_t)v);
 }
 
 
 ssize_t
-mrkpb_sz_int32(int32_t v)
+mnpb_sz_int32(int32_t v)
 {
-    return mrkpb_szvarint((uint32_t)v);
+    return mnpb_szvarint((uint32_t)v);
 }
 
 
 ssize_t
-mrkpb_unpack_int32(mnbytestream_t *bs, void *fd, int wtype, int32_t *value)
+mnpb_unpack_int32(mnbytestream_t *bs, void *fd, int wtype, int32_t *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_VARINT;
+        wtype = MNPB_WT_VARINT;
     }
 
-    if (wtype == MRKPB_WT_VARINT) {
+    if (wtype == MNPB_WT_VARINT) {
         uint64_t v;
 
-        if ((nread = mrkpb_devarint(bs, fd, &v)) < 0) {
+        if ((nread = mnpb_devarint(bs, fd, &v)) < 0) {
             goto end;
         }
         *value = (int32_t)(uint32_t)v;
 
-    } else if (wtype == MRKPB_WT_32BIT) {
-        nread = mrkpb_defi32(bs, fd, (uint32_t *)value);
+    } else if (wtype == MNPB_WT_32BIT) {
+        nread = mnpb_defi32(bs, fd, (uint32_t *)value);
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -746,22 +746,22 @@ end:
 
 
 ssize_t
-mrkpb_unpack_int64(mnbytestream_t *bs, void *fd, int wtype, int64_t *value)
+mnpb_unpack_int64(mnbytestream_t *bs, void *fd, int wtype, int64_t *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_VARINT;
+        wtype = MNPB_WT_VARINT;
     }
 
-    if (wtype == MRKPB_WT_VARINT) {
-        nread = mrkpb_devarint(bs, fd, (uint64_t *)value);
+    if (wtype == MNPB_WT_VARINT) {
+        nread = mnpb_devarint(bs, fd, (uint64_t *)value);
 
-    } else if (wtype == MRKPB_WT_64BIT) {
-        nread = mrkpb_defi64(bs, fd, (uint64_t *)value);
+    } else if (wtype == MNPB_WT_64BIT) {
+        nread = mnpb_defi64(bs, fd, (uint64_t *)value);
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -771,27 +771,27 @@ end:
 
 
 ssize_t
-mrkpb_unpack_uint32(mnbytestream_t *bs, void *fd, int wtype, uint32_t *value)
+mnpb_unpack_uint32(mnbytestream_t *bs, void *fd, int wtype, uint32_t *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_VARINT;
+        wtype = MNPB_WT_VARINT;
     }
 
-    if (wtype == MRKPB_WT_VARINT) {
+    if (wtype == MNPB_WT_VARINT) {
         uint64_t v;
 
-        if ((nread = mrkpb_devarint(bs, fd, &v)) < 0) {
+        if ((nread = mnpb_devarint(bs, fd, &v)) < 0) {
             goto end;
         }
         *value = v;
 
-    } else if (wtype == MRKPB_WT_32BIT) {
-        nread = mrkpb_defi32(bs, fd, value);
+    } else if (wtype == MNPB_WT_32BIT) {
+        nread = mnpb_defi32(bs, fd, value);
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -801,22 +801,22 @@ end:
 
 
 ssize_t
-mrkpb_unpack_uint64(mnbytestream_t *bs, void *fd, int wtype, uint64_t *value)
+mnpb_unpack_uint64(mnbytestream_t *bs, void *fd, int wtype, uint64_t *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_VARINT;
+        wtype = MNPB_WT_VARINT;
     }
 
-    if (wtype == MRKPB_WT_VARINT) {
-        nread = mrkpb_devarint(bs, fd, value);
+    if (wtype == MNPB_WT_VARINT) {
+        nread = mnpb_devarint(bs, fd, value);
 
-    } else if (wtype == MRKPB_WT_64BIT) {
-        nread = mrkpb_defi64(bs, fd, value);
+    } else if (wtype == MNPB_WT_64BIT) {
+        nread = mnpb_defi64(bs, fd, value);
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -826,19 +826,19 @@ end:
 
 
 ssize_t
-mrkpb_unpack_sint32(mnbytestream_t *bs, void *fd, int wtype, int32_t *value)
+mnpb_unpack_sint32(mnbytestream_t *bs, void *fd, int wtype, int32_t *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_VARINT;
+        wtype = MNPB_WT_VARINT;
     }
 
-    if (wtype == MRKPB_WT_VARINT) {
-        nread = mrkpb_dezz32(bs, fd, value);
+    if (wtype == MNPB_WT_VARINT) {
+        nread = mnpb_dezz32(bs, fd, value);
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -848,19 +848,19 @@ end:
 
 
 ssize_t
-mrkpb_unpack_sint64(mnbytestream_t *bs, void *fd, int wtype, int64_t *value)
+mnpb_unpack_sint64(mnbytestream_t *bs, void *fd, int wtype, int64_t *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_VARINT;
+        wtype = MNPB_WT_VARINT;
     }
 
-    if (wtype == MRKPB_WT_VARINT) {
-        nread = mrkpb_dezz64(bs, fd, value);
+    if (wtype == MNPB_WT_VARINT) {
+        nread = mnpb_dezz64(bs, fd, value);
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -870,19 +870,19 @@ end:
 
 
 ssize_t
-mrkpb_unpack_fixed32(mnbytestream_t *bs, void *fd, int wtype, uint32_t *value)
+mnpb_unpack_fixed32(mnbytestream_t *bs, void *fd, int wtype, uint32_t *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_32BIT;
+        wtype = MNPB_WT_32BIT;
     }
 
-    if (wtype == MRKPB_WT_32BIT) {
-        nread = mrkpb_defi32(bs, fd, value);
+    if (wtype == MNPB_WT_32BIT) {
+        nread = mnpb_defi32(bs, fd, value);
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -892,19 +892,19 @@ end:
 
 
 ssize_t
-mrkpb_unpack_fixed64(mnbytestream_t *bs, void *fd, int wtype, uint64_t *value)
+mnpb_unpack_fixed64(mnbytestream_t *bs, void *fd, int wtype, uint64_t *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_64BIT;
+        wtype = MNPB_WT_64BIT;
     }
 
-    if (wtype == MRKPB_WT_64BIT) {
-        nread = mrkpb_defi64(bs, fd, value);
+    if (wtype == MNPB_WT_64BIT) {
+        nread = mnpb_defi64(bs, fd, value);
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -914,19 +914,19 @@ end:
 
 
 ssize_t
-mrkpb_unpack_sfixed32(mnbytestream_t *bs, void *fd, int wtype, int32_t *value)
+mnpb_unpack_sfixed32(mnbytestream_t *bs, void *fd, int wtype, int32_t *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_32BIT;
+        wtype = MNPB_WT_32BIT;
     }
 
-    if (wtype == MRKPB_WT_32BIT) {
-        nread = mrkpb_defi32(bs, fd, (uint32_t *)value);
+    if (wtype == MNPB_WT_32BIT) {
+        nread = mnpb_defi32(bs, fd, (uint32_t *)value);
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -936,19 +936,19 @@ end:
 
 
 ssize_t
-mrkpb_unpack_sfixed64(mnbytestream_t *bs, void *fd, int wtype, int64_t *value)
+mnpb_unpack_sfixed64(mnbytestream_t *bs, void *fd, int wtype, int64_t *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_64BIT;
+        wtype = MNPB_WT_64BIT;
     }
 
-    if (wtype == MRKPB_WT_64BIT) {
-        nread = mrkpb_defi64(bs, fd, (uint64_t *)value);
+    if (wtype == MNPB_WT_64BIT) {
+        nread = mnpb_defi64(bs, fd, (uint64_t *)value);
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -958,36 +958,36 @@ end:
 
 
 ssize_t
-mrkpb_unpack_bool(mnbytestream_t *bs, void *fd, int wtype, bool *value)
+mnpb_unpack_bool(mnbytestream_t *bs, void *fd, int wtype, bool *value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_VARINT;
+        wtype = MNPB_WT_VARINT;
     }
 
-    if (wtype == MRKPB_WT_VARINT) {
+    if (wtype == MNPB_WT_VARINT) {
         uint64_t v = 0;
 
-        if ((nread = mrkpb_devarint(bs, fd, &v)) < 0) {
+        if ((nread = mnpb_devarint(bs, fd, &v)) < 0) {
             goto end;
         }
         *value = (bool)v;
 
-    } else if (wtype == MRKPB_WT_32BIT) {
+    } else if (wtype == MNPB_WT_32BIT) {
         uint32_t v = 0;
 
-        nread = mrkpb_defi32(bs, fd, &v);
+        nread = mnpb_defi32(bs, fd, &v);
         *value = (bool)v;
 
-    } else if (wtype == MRKPB_WT_64BIT) {
+    } else if (wtype == MNPB_WT_64BIT) {
         uint64_t v = 0;
 
-        nread = mrkpb_defi64(bs, fd, &v);
+        nread = mnpb_defi64(bs, fd, &v);
         *value = (bool)v;
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -997,21 +997,21 @@ end:
 
 
 ssize_t
-mrkpb_unpack_string(mnbytestream_t *bs, void *fd, int wtype, mnbytes_t **value)
+mnpb_unpack_string(mnbytestream_t *bs, void *fd, int wtype, mnbytes_t **value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_LDELIM;
+        wtype = MNPB_WT_LDELIM;
     }
 
-    if (wtype == MRKPB_WT_LDELIM) {
+    if (wtype == MNPB_WT_LDELIM) {
         BYTES_DECREF(value);
-        nread = mrkpb_destr(bs, fd, value);
+        nread = mnpb_destr(bs, fd, value);
         BYTES_INCREF(*value);
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -1021,21 +1021,21 @@ end:
 
 
 ssize_t
-mrkpb_unpack_bytes(mnbytestream_t *bs, void *fd, int wtype, mnbytes_t **value)
+mnpb_unpack_bytes(mnbytestream_t *bs, void *fd, int wtype, mnbytes_t **value)
 {
     ssize_t nread;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_LDELIM;
+        wtype = MNPB_WT_LDELIM;
     }
 
-    if (wtype == MRKPB_WT_LDELIM) {
+    if (wtype == MNPB_WT_LDELIM) {
         BYTES_DECREF(value);
-        nread = mrkpb_debytes(bs, fd, value);
+        nread = mnpb_debytes(bs, fd, value);
         BYTES_INCREF(*value);
 
     } else {
-        nread = MRKPB_ETYPE;
+        nread = MNPB_ETYPE;
         goto end;
     }
 
@@ -1045,7 +1045,7 @@ end:
 
 
 ssize_t
-mrkpb_unpack_key(mnbytestream_t *bs, void *fd, uint64_t *tag, int *wtype)
+mnpb_unpack_key(mnbytestream_t *bs, void *fd, uint64_t *tag, int *wtype)
 {
     ssize_t nread;
     uint64_t key;
@@ -1053,7 +1053,7 @@ mrkpb_unpack_key(mnbytestream_t *bs, void *fd, uint64_t *tag, int *wtype)
     nread = 0;
     key = 0;
 
-    if ((nread = mrkpb_devarint(bs, fd, &key)) < 0) {
+    if ((nread = mnpb_devarint(bs, fd, &key)) < 0) {
         goto end;
     }
 
@@ -1066,7 +1066,7 @@ end:
 
 
 ssize_t
-mrkpb_devoid(mnbytestream_t *bs, void *fd, UNUSED uint64_t tag, int wtype)
+mnpb_devoid(mnbytestream_t *bs, void *fd, UNUSED uint64_t tag, int wtype)
 {
     ssize_t res;
     union {
@@ -1076,30 +1076,30 @@ mrkpb_devoid(mnbytestream_t *bs, void *fd, UNUSED uint64_t tag, int wtype)
     } u;
 
     if (wtype == -1) {
-        wtype = MRKPB_WT_LDELIM;
+        wtype = MNPB_WT_LDELIM;
     }
 
     switch (wtype) {
-        case MRKPB_WT_VARINT:
-            res = mrkpb_devarint(bs, fd, &u.i8);
+        case MNPB_WT_VARINT:
+            res = mnpb_devarint(bs, fd, &u.i8);
             break;
 
-        case MRKPB_WT_64BIT:
-            res = mrkpb_defi64(bs, fd, &u.i8);
+        case MNPB_WT_64BIT:
+            res = mnpb_defi64(bs, fd, &u.i8);
             break;
 
-        case MRKPB_WT_LDELIM:
+        case MNPB_WT_LDELIM:
             u.s = NULL;
-            res = mrkpb_debytes(bs, fd, &u.s);
+            res = mnpb_debytes(bs, fd, &u.s);
             BYTES_DECREF(&u.s);
             break;
 
-        case MRKPB_WT_32BIT:
-            res = mrkpb_defi32(bs, fd, &u.i4);
+        case MNPB_WT_32BIT:
+            res = mnpb_defi32(bs, fd, &u.i4);
             break;
 
         default:
-            res = MRKPB_ETYPE;
+            res = MNPB_ETYPE;
     }
 
     return res;

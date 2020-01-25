@@ -6,25 +6,25 @@
 #   - nodist_HEADERS
 #   - noinst_HEADERS
 
-BUILT_SOURCES = mrkpbcg.c mrkpbcg.h mrkpbcl.c diag.c diag.h
+BUILT_SOURCES = mnpbcg.c mnpbcg.h mnpbcl.c diag.c diag.h
 EXTRA_DIST = $(diags)
 CLEANFILES = $(BUILT_SOURCES) *.core core
 #CLEANFILES += *.in
 AM_MAKEFLAGS = -s
 
-lib_LTLIBRARIES = libmrkprotobuf.la
+lib_LTLIBRARIES = libmnprotobuf.la
 
-bin_PROGRAMS = mrkpbc
+bin_PROGRAMS = mnpbc
 
-nobase_include_HEADERS = mrkprotobuf.h
+nobase_include_HEADERS = mnprotobuf.h
 
-noinst_HEADERS = mrkpbc.h
+noinst_HEADERS = mnpbc.h
 
-libmrkprotobuf_la_SOURCES = mrkprotobuf.c
-nodist_libmrkprotobuf_la_SOURCES = diag.c
+libmnprotobuf_la_SOURCES = mnprotobuf.c
+nodist_libmnprotobuf_la_SOURCES = diag.c
 
-nodist_mrkpbc_SOURCES = diag.c
-mrkpbc_SOURCES = mrkpbcg.y mrkpbcl.l mrkpbcscan.c mrkpbcc.c mrkpbc-main.c
+nodist_mnpbc_SOURCES = diag.c
+mnpbc_SOURCES = mnpbcg.y mnpbcl.l mnpbcscan.c mnpbcc.c mnpbc-main.c
 
 diags = diag.txt
 
@@ -41,21 +41,21 @@ endif
 endif
 
 if ALLSTATIC
-libmrkprotobuf_la_LDFLAGS = -all-static
-mrkpbc_LDFLAGS = -all-static
+libmnprotobuf_la_LDFLAGS = -all-static
+mnpbc_LDFLAGS = -all-static
 else
-libmrkprotobuf_la_LDFLAGS =
-mrkpbc_LDFLAGS =
+libmnprotobuf_la_LDFLAGS =
+mnpbc_LDFLAGS =
 endif
 
-libmrkprotobuf_la_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
+libmnprotobuf_la_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 
-libmrkprotobuf_la_LDFLAGS += $(DEBUG_LD_FLAGS) -version-info 0:0:0 -L$(libdir)
-libmrkprotobuf_la_LIBADD = -lmrkcommon -lmndiag
+libmnprotobuf_la_LDFLAGS += $(DEBUG_LD_FLAGS) -version-info 0:0:0 -L$(libdir)
+libmnprotobuf_la_LIBADD = -lmncommon -lmndiag
 
-mrkpbc_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/test -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
-mrkpbc_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(libdir)
-mrkpbc_LDADD = -lmrkcommon -lmndiag $(LEXLIB)
+mnpbc_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/test -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
+mnpbc_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(libdir)
+mnpbc_LDADD = -lmncommon -lmndiag $(LEXLIB)
 
 SUBDIRS = .
 

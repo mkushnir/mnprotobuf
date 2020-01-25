@@ -1,17 +1,17 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include <mrkcommon/array.h>
-#include <mrkcommon/hash.h>
-#include <mrkcommon/bytes.h>
+#include <mncommon/array.h>
+#include <mncommon/hash.h>
+#include <mncommon/bytes.h>
 
 #define TRRET_DEBUG
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
 
 #include "diag.h"
 
-#include "mrkpbc.h"
+#include "mnpbc.h"
 
 mnbytes_t _int32 = BYTES_INITIALIZER("int32");
 mnbytes_t _int64 = BYTES_INITIALIZER("int64");
@@ -29,15 +29,15 @@ mnbytes_t _string = BYTES_INITIALIZER("string");
 mnbytes_t _bytes = BYTES_INITIALIZER("bytes");
 mnbytes_t _bool = BYTES_INITIALIZER("bool");
 
-static void mrkpbc_container_dump(mrkpbc_container_t *);
+static void mnpbc_container_dump(mnpbc_container_t *);
 
 
-static mrkpbc_field_t *
-mrkpbc_field_new(void)
+static mnpbc_field_t *
+mnpbc_field_new(void)
 {
-    mrkpbc_field_t *res;
+    mnpbc_field_t *res;
 
-    if (MRKUNLIKELY((res = malloc(sizeof(mrkpbc_field_t))) == NULL)) {
+    if (MNUNLIKELY((res = malloc(sizeof(mnpbc_field_t))) == NULL)) {
         FAIL("malloc");
     }
     res->parent = NULL;
@@ -48,14 +48,14 @@ mrkpbc_field_new(void)
     res->be.name = NULL;
     res->be.fqname = NULL;
     res->fnum = 0l;
-    res->wtype = MRKPB_WT_UNDEF;
+    res->wtype = MNPB_WT_UNDEF;
     res->flags.repeated = 0;
     return res;
 }
 
 
 static void
-mrkpbc_field_destroy(mrkpbc_field_t **field)
+mnpbc_field_destroy(mnpbc_field_t **field)
 {
     if (*field != NULL) {
         BYTES_DECREF(&(*field)->ty);
@@ -70,30 +70,30 @@ mrkpbc_field_destroy(mrkpbc_field_t **field)
 
 
 static int
-mrkpbc_field_item_fini(mnbytes_t *key, mrkpbc_field_t *value)
+mnpbc_field_item_fini(mnbytes_t *key, mnpbc_field_t *value)
 {
     BYTES_DECREF(&key);
-    mrkpbc_field_destroy(&value);
+    mnpbc_field_destroy(&value);
     return 0;
 }
 
 
-static mrkpbc_container_t *
-mrkpbc_field_get_type(mrkpbc_field_t *field)
+static mnpbc_container_t *
+mnpbc_field_get_type(mnpbc_field_t *field)
 {
-    mrkpbc_container_t *ty;
+    mnpbc_container_t *ty;
 
     assert(field->parent != NULL);
     if (field->ty == NULL) {
         return NULL;
     }
 
-    ty = mrkpbc_ctx_get_container(field->parent->ctx, field->ty);
+    ty = mnpbc_ctx_get_container(field->parent->ctx, field->ty);
     if (ty == NULL) {
         mnbytes_t *fqty;
 
-        fqty = mrkpbc_container_fqname(field->parent, field->ty);
-        ty = mrkpbc_ctx_get_container(field->parent->ctx, fqty);
+        fqty = mnpbc_container_fqname(field->parent, field->ty);
+        ty = mnpbc_ctx_get_container(field->parent->ctx, fqty);
         BYTES_DECREF(&fqty);
     }
     return ty;
@@ -101,17 +101,17 @@ mrkpbc_field_get_type(mrkpbc_field_t *field)
 
 
 int
-mrkpbc_container_add_field(mrkpbc_container_t *cont,
+mnpbc_container_add_field(mnpbc_container_t *cont,
                            mnbytes_t *ty,
                            mnbytes_t *name,
                            int fnum,
                            int repeated)
 {
     int res;
-    mrkpbc_field_t *field, **pfield;
+    mnpbc_field_t *field, **pfield;
     mnhash_item_t *hit;
 
-    field = mrkpbc_field_new();
+    field = mnpbc_field_new();
 
     field->parent = cont;
     field->ty = ty;
@@ -121,7 +121,7 @@ mrkpbc_container_add_field(mrkpbc_container_t *cont,
     assert(name != NULL);
     field->pb.name = name;
     BYTES_INCREF(field->pb.name);
-    field->pb.fqname = mrkpbc_container_fqname(cont, name);
+    field->pb.fqname = mnpbc_container_fqname(cont, name);
     BYTES_INCREF(field->pb.fqname);
     field->fnum = fnum;
     field->flags.repeated = repeated;
@@ -131,13 +131,13 @@ mrkpbc_container_add_field(mrkpbc_container_t *cont,
               BDATA(field->pb.name),
               (long)field->fnum,
               BDATA(cont->pb.fqname));
-        res = MRKPBC_CONTAINER_ADD_FIELD + 1;
+        res = MNPBC_CONTAINER_ADD_FIELD + 1;
         goto err;
     }
     hash_set_item(&cont->ctx->fields, field->pb.fqname, field);
     BYTES_INCREF(field->pb.fqname);
 
-    if (MRKUNLIKELY((pfield = array_incr(&cont->fields)) == NULL)) {
+    if (MNUNLIKELY((pfield = array_incr(&cont->fields)) == NULL)) {
         FAIL("array_incr");
     }
     *pfield = field;
@@ -147,17 +147,17 @@ end:
     TRRET(res);
 
 err:
-    mrkpbc_field_destroy(&field);
+    mnpbc_field_destroy(&field);
     goto end;
 }
 
 
-static mrkpbc_container_t *
-mrkpbc_container_new(void)
+static mnpbc_container_t *
+mnpbc_container_new(void)
 {
-    mrkpbc_container_t *res;
+    mnpbc_container_t *res;
 
-    if (MRKUNLIKELY((res = malloc(sizeof(mrkpbc_container_t))) == NULL)) {
+    if (MNUNLIKELY((res = malloc(sizeof(mnpbc_container_t))) == NULL)) {
         FAIL("malloc");
     }
 
@@ -170,15 +170,15 @@ mrkpbc_container_new(void)
     res->be.encode = NULL;
     res->be.decode = NULL;
     res->be.sz = NULL;
-    if (MRKUNLIKELY(array_init(&res->fields,
-                               sizeof(mrkpbc_field_t *),
+    if (MNUNLIKELY(array_init(&res->fields,
+                               sizeof(mnpbc_field_t *),
                                0,
                                NULL,
                                NULL) != 0)) {
         FAIL("array_init");
     }
-    if (MRKUNLIKELY(array_init(&res->containers,
-                               sizeof(mrkpbc_container_t *),
+    if (MNUNLIKELY(array_init(&res->containers,
+                               sizeof(mnpbc_container_t *),
                                0,
                                NULL,
                                NULL))) {
@@ -193,7 +193,7 @@ mrkpbc_container_new(void)
 
 
 static void
-mrkpbc_container_destroy(mrkpbc_container_t **cont)
+mnpbc_container_destroy(mnpbc_container_t **cont)
 {
     if (*cont != NULL) {
         BYTES_DECREF(&(*cont)->pb.name);
@@ -212,16 +212,16 @@ mrkpbc_container_destroy(mrkpbc_container_t **cont)
 
 
 static int
-mrkpbc_container_item_fini(mnbytes_t *key, mrkpbc_container_t *value)
+mnpbc_container_item_fini(mnbytes_t *key, mnpbc_container_t *value)
 {
     BYTES_DECREF(&key);
-    mrkpbc_container_destroy(&value);
+    mnpbc_container_destroy(&value);
     return 0;
 }
 
 
 mnbytes_t *
-mrkpbc_container_fqname(mrkpbc_container_t *cont, mnbytes_t *name)
+mnpbc_container_fqname(mnpbc_container_t *cont, mnbytes_t *name)
 {
     mnbytes_t *res;
 
@@ -231,7 +231,7 @@ mrkpbc_container_fqname(mrkpbc_container_t *cont, mnbytes_t *name)
 }
 
 void
-mrkpbc_container_set_pb_fqname(mrkpbc_container_t *cont, mnbytes_t *fqname)
+mnpbc_container_set_pb_fqname(mnpbc_container_t *cont, mnbytes_t *fqname)
 {
     BYTES_DECREF(&cont->pb.fqname);
     cont->pb.fqname = fqname;
@@ -240,7 +240,7 @@ mrkpbc_container_set_pb_fqname(mrkpbc_container_t *cont, mnbytes_t *fqname)
 
 
 void
-mrkpbc_container_set_be_encode(mrkpbc_container_t *cont, mnbytes_t *encode)
+mnpbc_container_set_be_encode(mnpbc_container_t *cont, mnbytes_t *encode)
 {
     BYTES_DECREF(&cont->be.encode);
     cont->be.encode = encode;
@@ -249,7 +249,7 @@ mrkpbc_container_set_be_encode(mrkpbc_container_t *cont, mnbytes_t *encode)
 
 
 void
-mrkpbc_container_set_be_decode(mrkpbc_container_t *cont, mnbytes_t *decode)
+mnpbc_container_set_be_decode(mnpbc_container_t *cont, mnbytes_t *decode)
 {
     BYTES_DECREF(&cont->be.decode);
     cont->be.decode = decode;
@@ -258,7 +258,7 @@ mrkpbc_container_set_be_decode(mrkpbc_container_t *cont, mnbytes_t *decode)
 
 
 void
-mrkpbc_container_set_be_sz(mrkpbc_container_t *cont, mnbytes_t *sz)
+mnpbc_container_set_be_sz(mnpbc_container_t *cont, mnbytes_t *sz)
 {
     BYTES_DECREF(&cont->be.sz);
     cont->be.sz = sz;
@@ -267,7 +267,7 @@ mrkpbc_container_set_be_sz(mrkpbc_container_t *cont, mnbytes_t *sz)
 
 
 void
-mrkpbc_container_set_be_rawsz(mrkpbc_container_t *cont, mnbytes_t *rawsz)
+mnpbc_container_set_be_rawsz(mnpbc_container_t *cont, mnbytes_t *rawsz)
 {
     BYTES_DECREF(&cont->be.rawsz);
     cont->be.rawsz = rawsz;
@@ -276,7 +276,7 @@ mrkpbc_container_set_be_rawsz(mrkpbc_container_t *cont, mnbytes_t *rawsz)
 
 
 void
-mrkpbc_container_set_be_dump(mrkpbc_container_t *cont, mnbytes_t *dump)
+mnpbc_container_set_be_dump(mnpbc_container_t *cont, mnbytes_t *dump)
 {
     BYTES_DECREF(&cont->be.dump);
     cont->be.dump = dump;
@@ -285,7 +285,7 @@ mrkpbc_container_set_be_dump(mrkpbc_container_t *cont, mnbytes_t *dump)
 
 
 void
-mrkpbc_container_traverse_fields(mrkpbc_container_t *cont,
+mnpbc_container_traverse_fields(mnpbc_container_t *cont,
                                  array_traverser_t cb,
                                  void *udata)
 {
@@ -294,7 +294,7 @@ mrkpbc_container_traverse_fields(mrkpbc_container_t *cont,
 
 
 void
-mrkpbc_container_traverse_containers(mrkpbc_container_t *cont,
+mnpbc_container_traverse_containers(mnpbc_container_t *cont,
                                      array_traverser_t cb,
                                      void *udata)
 {
@@ -302,16 +302,16 @@ mrkpbc_container_traverse_containers(mrkpbc_container_t *cont,
 }
 
 
-mrkpbc_container_t *
-mrkpbc_ctx_add_container(mrkpbc_ctx_t *ctx,
-                         mrkpbc_container_t *parent,
+mnpbc_container_t *
+mnpbc_ctx_add_container(mnpbc_ctx_t *ctx,
+                         mnpbc_container_t *parent,
                          mnbytes_t *name,
                          int kind)
 {
-    mrkpbc_container_t *cont;
+    mnpbc_container_t *cont;
     mnhash_item_t *hit;
 
-    cont = mrkpbc_container_new();
+    cont = mnpbc_container_new();
     cont->ctx = ctx;
     cont->pb.name = name;
     BYTES_INCREF(cont->pb.name);
@@ -319,15 +319,15 @@ mrkpbc_ctx_add_container(mrkpbc_ctx_t *ctx,
     if (parent == NULL) {
         cont->pb.fqname = name;
     } else {
-        mrkpbc_container_t **pcont;
+        mnpbc_container_t **pcont;
 
-        if (MRKUNLIKELY((pcont = array_incr(&parent->containers)) == NULL)) {
+        if (MNUNLIKELY((pcont = array_incr(&parent->containers)) == NULL)) {
             FAIL("array_incr");
         }
         *pcont = cont;
         cont->parent = parent;
 
-        cont->pb.fqname = mrkpbc_container_fqname(parent, name);
+        cont->pb.fqname = mnpbc_container_fqname(parent, name);
     }
     BYTES_INCREF(cont->pb.fqname);
     cont->kind = kind;
@@ -335,7 +335,7 @@ mrkpbc_ctx_add_container(mrkpbc_ctx_t *ctx,
     if ((hit = hash_get_item(&ctx->containers, cont->pb.fqname)) != NULL) {
         TRACE("Validation error: duplicate container (%s)",
               BDATA(cont->pb.fqname));
-        TR(MRKPBC_CTX_ADD_CONTAINER + 1);
+        TR(MNPBC_CTX_ADD_CONTAINER + 1);
         goto err;
     }
     hash_set_item(&ctx->containers, cont->pb.fqname, cont);
@@ -345,16 +345,16 @@ end:
     return cont;
 
 err:
-    mrkpbc_container_destroy(&cont);
+    mnpbc_container_destroy(&cont);
     goto end;
 }
 
 
-mrkpbc_container_t *
-mrkpbc_ctx_get_container(mrkpbc_ctx_t *ctx, mnbytes_t *fqname)
+mnpbc_container_t *
+mnpbc_ctx_get_container(mnpbc_ctx_t *ctx, mnbytes_t *fqname)
 {
     mnhash_item_t *hit;
-    mrkpbc_container_t *cont;
+    mnpbc_container_t *cont;
 
     if ((hit = hash_get_item(&ctx->containers, fqname)) == NULL) {
         cont = NULL;
@@ -366,10 +366,10 @@ mrkpbc_ctx_get_container(mrkpbc_ctx_t *ctx, mnbytes_t *fqname)
 }
 
 
-mrkpbc_container_t *
-mrkpbc_ctx_top_container(mrkpbc_ctx_t *ctx)
+mnpbc_container_t *
+mnpbc_ctx_top_container(mnpbc_ctx_t *ctx)
 {
-    mrkpbc_container_t **pcont;
+    mnpbc_container_t **pcont;
     mnarray_iter_t it;
 
     if ((pcont = array_last(&ctx->stack, &it)) == NULL) {
@@ -380,10 +380,10 @@ mrkpbc_ctx_top_container(mrkpbc_ctx_t *ctx)
 }
 
 void
-mrkpbc_ctx_push_container(mrkpbc_ctx_t *ctx, mrkpbc_container_t *cont)
+mnpbc_ctx_push_container(mnpbc_ctx_t *ctx, mnpbc_container_t *cont)
 {
-    mrkpbc_container_t **pcont;
-    if (MRKUNLIKELY((pcont = array_incr(&ctx->stack)) == NULL)) {
+    mnpbc_container_t **pcont;
+    if (MNUNLIKELY((pcont = array_incr(&ctx->stack)) == NULL)) {
         FAIL("array_incr");
     }
     *pcont = cont;
@@ -391,18 +391,18 @@ mrkpbc_ctx_push_container(mrkpbc_ctx_t *ctx, mrkpbc_container_t *cont)
 
 
 void
-mrkpbc_ctx_pop_container(mrkpbc_ctx_t *ctx)
+mnpbc_ctx_pop_container(mnpbc_ctx_t *ctx)
 {
-    UNUSED mrkpbc_container_t *cont;
+    UNUSED mnpbc_container_t *cont;
 
-    cont = mrkpbc_ctx_top_container(ctx);
+    cont = mnpbc_ctx_top_container(ctx);
     (void)array_decr(&ctx->stack);
 }
 
 
 static int
 reset_visited(UNUSED mnbytes_t *key,
-              mrkpbc_container_t *cont,
+              mnpbc_container_t *cont,
               UNUSED void *udata)
 {
     cont->flags.visited = 0;
@@ -411,7 +411,7 @@ reset_visited(UNUSED mnbytes_t *key,
 
 
 int
-mrkpbc_ctx_traverse(mrkpbc_ctx_t *ctx, hash_traverser_t cb, void *udata)
+mnpbc_ctx_traverse(mnpbc_ctx_t *ctx, hash_traverser_t cb, void *udata)
 {
     (void)hash_traverse(&ctx->containers,
                         (hash_traverser_t)reset_visited,
@@ -435,12 +435,12 @@ fnum_cmp(void *a, void *b)
 
 static int
 validate_container(UNUSED mnbytes_t *key,
-                   mrkpbc_container_t *cont,
+                   mnpbc_container_t *cont,
                    UNUSED void *udata)
 {
     int res;
     mnhash_t fnums;
-    mrkpbc_field_t **field;
+    mnpbc_field_t **field;
     mnarray_iter_t it;
     /*
      * unique fnums within a container
@@ -467,12 +467,12 @@ validate_container(UNUSED mnbytes_t *key,
 
         mnhash_item_t *hit;
 
-        (*field)->cty = mrkpbc_field_get_type(*field);
+        (*field)->cty = mnpbc_field_get_type(*field);
 
         if ((*field)->cty != NULL &&
-            (*field)->cty->kind == MRKPBC_CONT_KONEOF) {
+            (*field)->cty->kind == MNPBC_CONT_KONEOF) {
 
-            mrkpbc_field_t **ufield;
+            mnpbc_field_t **ufield;
             mnarray_iter_t uit;
 
             for (ufield = array_first(&(*field)->cty->fields, &uit);
@@ -487,7 +487,7 @@ validate_container(UNUSED mnbytes_t *key,
                           BDATA((*ufield)->pb.name),
                           (long)(*ufield)->fnum,
                           BDATA(cont->pb.fqname));
-                    res = MRKPB_CTX_VALIDATE_DUPLICATE_FNUM;
+                    res = MNPB_CTX_VALIDATE_DUPLICATE_FNUM;
                     goto end;
 
                 } else {
@@ -507,7 +507,7 @@ validate_container(UNUSED mnbytes_t *key,
                       BDATA((*field)->pb.name),
                       (long)(*field)->fnum,
                       BDATA(cont->pb.fqname));
-                res = MRKPB_CTX_VALIDATE_DUPLICATE_FNUM;
+                res = MNPB_CTX_VALIDATE_DUPLICATE_FNUM;
                 goto end;
 
             } else {
@@ -516,7 +516,7 @@ validate_container(UNUSED mnbytes_t *key,
         }
     }
 
-    if (cont->kind != MRKPBC_CONT_KENUM) {
+    if (cont->kind != MNPBC_CONT_KENUM) {
         for (field = array_first(&cont->fields, &it);
              field != NULL;
              field = array_next(&cont->fields, &it)) {
@@ -526,13 +526,13 @@ validate_container(UNUSED mnbytes_t *key,
                       BDATA((*field)->pb.name),
                       (long)(*field)->fnum,
                       BDATA(cont->pb.fqname));
-                res = MRKPB_CTX_VALIDATE_ENUM_FNUM_RESERVED;
+                res = MNPB_CTX_VALIDATE_ENUM_FNUM_RESERVED;
                 goto end;
             }
         }
     }
 
-    if (cont->kind == MRKPBC_CONT_KENUM) {
+    if (cont->kind == MNPBC_CONT_KENUM) {
         if ((field = array_get(&cont->fields, 0)) != NULL) {
             if ((*field)->fnum != 0) {
                 TRACE("Validation error: first enum field nonzero "
@@ -540,18 +540,18 @@ validate_container(UNUSED mnbytes_t *key,
                       BDATA((*field)->pb.name),
                       (long)(*field)->fnum,
                       BDATA(cont->pb.fqname));
-                res = MRKPB_CTX_VALIDATE_FIRST_ENUM_NONZERO;
+                res = MNPB_CTX_VALIDATE_FIRST_ENUM_NONZERO;
                 goto end;
             }
         }
     }
 
-    if (cont->kind == MRKPBC_CONT_KONEOF) {
+    if (cont->kind == MNPBC_CONT_KONEOF) {
         for (field = array_first(&cont->fields, &it);
              field != NULL;
              field = array_next(&cont->fields, &it)) {
             if ((*field)->flags.repeated) {
-                res = MRKPB_CTX_VALIDATE_ONEOF_REPEATED;
+                res = MNPB_CTX_VALIDATE_ONEOF_REPEATED;
                 goto end;
             }
         }
@@ -564,11 +564,11 @@ end:
 
 
 int
-mrkpbc_ctx_validate(mrkpbc_ctx_t *ctx)
+mnpbc_ctx_validate(mnpbc_ctx_t *ctx)
 {
     int res;
 
-    if ((res = mrkpbc_ctx_traverse(ctx,
+    if ((res = mnpbc_ctx_traverse(ctx,
                                    (hash_traverser_t)validate_container,
                                    NULL)) != 0) {
         goto end;
@@ -582,7 +582,7 @@ end:
  * dump
  */
 static int
-mrkpbc_field_aitem_dump(mrkpbc_field_t **field, UNUSED void *udata)
+mnpbc_field_aitem_dump(mnpbc_field_t **field, UNUSED void *udata)
 {
     TRACE(" %s %s%s = %ld",
           BDATASAFE((*field)->ty),
@@ -594,57 +594,57 @@ mrkpbc_field_aitem_dump(mrkpbc_field_t **field, UNUSED void *udata)
 
 
 static int
-mrkpbc_container_aitem_dump(mrkpbc_container_t **cont, UNUSED void *udata)
+mnpbc_container_aitem_dump(mnpbc_container_t **cont, UNUSED void *udata)
 {
-    mrkpbc_container_dump(*cont);
+    mnpbc_container_dump(*cont);
     return 0;
 }
 
 
 static void
-mrkpbc_container_dump(mrkpbc_container_t *cont)
+mnpbc_container_dump(mnpbc_container_t *cont)
 {
     (void)array_traverse(&cont->containers,
-                         (array_traverser_t)mrkpbc_container_aitem_dump,
+                         (array_traverser_t)mnpbc_container_aitem_dump,
                          NULL);
     TRACE("%s %s",
           (
-           cont->kind == MRKPBC_CONT_KBUILTIN ? "<builtin>" :
-           cont->kind == MRKPBC_CONT_KMESSAGE ? "STRUCT" :
-           cont->kind == MRKPBC_CONT_KENUM ? "ENUM" :
-           cont->kind == MRKPBC_CONT_KONEOF ? "UNION" :
+           cont->kind == MNPBC_CONT_KBUILTIN ? "<builtin>" :
+           cont->kind == MNPBC_CONT_KMESSAGE ? "STRUCT" :
+           cont->kind == MNPBC_CONT_KENUM ? "ENUM" :
+           cont->kind == MNPBC_CONT_KONEOF ? "UNION" :
            "<unknown>"
           ),
           BDATA(cont->pb.fqname));
     (void)array_traverse(&cont->fields,
-                         (array_traverser_t)mrkpbc_field_aitem_dump,
+                         (array_traverser_t)mnpbc_field_aitem_dump,
                          NULL);
 }
 
 
 static int
-mrkpbc_container_hitem_dump(UNUSED mnbytes_t *key,
-                            mrkpbc_container_t *cont,
+mnpbc_container_hitem_dump(UNUSED mnbytes_t *key,
+                            mnpbc_container_t *cont,
                             UNUSED void *udata)
 {
     if (cont->parent == NULL) {
-        mrkpbc_container_dump(cont);
+        mnpbc_container_dump(cont);
     }
     return 0;
 }
 
 
 void
-mrkpbc_ctx_dump(mrkpbc_ctx_t *ctx)
+mnpbc_ctx_dump(mnpbc_ctx_t *ctx)
 {
-    mrkpbc_ctx_traverse(ctx,
-                        (hash_traverser_t)mrkpbc_container_hitem_dump,
+    mnpbc_ctx_traverse(ctx,
+                        (hash_traverser_t)mnpbc_container_hitem_dump,
                         NULL);
 }
 
 
 void
-mrkpbc_ctx_init(mrkpbc_ctx_t *ctx)
+mnpbc_ctx_init(mnpbc_ctx_t *ctx)
 {
     ctx->namein = NULL;
     ctx->nameout0 = NULL;
@@ -656,16 +656,16 @@ mrkpbc_ctx_init(mrkpbc_ctx_t *ctx)
               127,
               (hash_hashfn_t)bytes_hash,
               (hash_item_comparator_t)bytes_cmp,
-              (hash_item_finalizer_t)mrkpbc_container_item_fini);
+              (hash_item_finalizer_t)mnpbc_container_item_fini);
 
     hash_init(&ctx->fields,
               521,
               (hash_hashfn_t)bytes_hash,
               (hash_item_comparator_t)bytes_cmp,
-              (hash_item_finalizer_t)mrkpbc_field_item_fini);
+              (hash_item_finalizer_t)mnpbc_field_item_fini);
 
-    if (MRKUNLIKELY(array_init(&ctx->stack,
-                               sizeof(mrkpbc_container_t *),
+    if (MNUNLIKELY(array_init(&ctx->stack,
+                               sizeof(mnpbc_container_t *),
                                0,
                                NULL,
                                NULL) != 0)) {
@@ -675,7 +675,7 @@ mrkpbc_ctx_init(mrkpbc_ctx_t *ctx)
 
 
 void
-mrkpbc_ctx_fini(mrkpbc_ctx_t *ctx)
+mnpbc_ctx_fini(mnpbc_ctx_t *ctx)
 {
     (void)array_fini(&ctx->stack);
     hash_fini(&ctx->fields);

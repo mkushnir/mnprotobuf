@@ -13,11 +13,11 @@
 #   include <malloc.h>
 #endif
 
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
 
 #include "diag.h"
-#include "mrkpbc.h"
+#include "mnpbc.h"
 
 #ifndef NDEBUG
 const char *_malloc_options = "AJ";
@@ -53,7 +53,7 @@ main(UNUSED int argc, char **argv)
 {
     char ch;
     int res;
-    mrkpbc_ctx_t ctx;
+    mnpbc_ctx_t ctx;
     mnbytes_t *namein, *nameout0, *nameout1;
     FILE *in, *out0, *out1;
 
@@ -112,7 +112,7 @@ main(UNUSED int argc, char **argv)
     argc -= optind;
     argv += optind;
 
-    mrkpbc_ctx_init(&ctx);
+    mnpbc_ctx_init(&ctx);
 
     if (argc < 1) {
         namein = bytes_new_from_str("test");
@@ -159,24 +159,24 @@ main(UNUSED int argc, char **argv)
         free(s1);
     }
 
-    mrkpbc_ctx_init_c(&ctx,
+    mnpbc_ctx_init_c(&ctx,
                       namein,
                       in,
                       nameout0,
                       out0,
                       nameout1,
                       out1);
-    if ((res = mrkpbc_scan(&ctx)) != 0) {
+    if ((res = mnpbc_scan(&ctx)) != 0) {
         goto end;
     }
-    if ((mrkpbc_ctx_validate(&ctx)) != 0) {
+    if ((mnpbc_ctx_validate(&ctx)) != 0) {
         goto end;
     }
 
-    mrkpbc_ctx_render_c(&ctx);
+    mnpbc_ctx_render_c(&ctx);
 
 end:
-    mrkpbc_ctx_fini(&ctx);
+    mnpbc_ctx_fini(&ctx);
 
     return 0;
 }

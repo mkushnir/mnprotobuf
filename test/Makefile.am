@@ -25,7 +25,7 @@ BUILT_SOURCES = \
 
 EXTRA_DIST = $(diags) $(data)
 
-#noinst_HEADERS = ../src/mrkprotobuf.h
+#noinst_HEADERS = ../src/mnprotobuf.h
 
 DEBUG_LD_FLAGS =
 if DEBUG
@@ -48,7 +48,7 @@ endif
 common_cflags = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/test -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir) -DPACKAGE_ROOT="\"$(top_srcdir)\""
 
 common_ldflags += $(DEBUG_LD_FLAGS) -L$(top_srcdir)/src/.libs -L$(libdir)
-common_ldadd = -lmrkprotobuf -lmrkcommon -lmndiag
+common_ldadd = -lmnprotobuf -lmncommon -lmndiag
 
 test_scalar_01_SOURCES = test-scalar-01.c data/scalar-01.c
 test_scalar_01_CFLAGS = $(common_cflags)
@@ -93,25 +93,25 @@ diag.c diag.h: $(diags)
 	$(AM_V_GEN) cat $(diags) | sort -u >diag.txt.tmp && mndiagen -v -S diag.txt.tmp -L global -H diag.h -C diag.c ../*.[ch] ./*.[ch]
 
 data/scalar-01.c data/scalar-01.h: data/scalar-01.proto
-	$(AM_V_GEN) ../src/mrkpbc -H data/scalar-01.h -C data/scalar-01.c data/scalar-01.proto
+	$(AM_V_GEN) ../src/mnpbc -H data/scalar-01.h -C data/scalar-01.c data/scalar-01.proto
 
 data/scalar-02.c data/scalar-02.h: data/scalar-02.proto
-	$(AM_V_GEN) ../src/mrkpbc -H data/scalar-02.h -C data/scalar-02.c data/scalar-02.proto
+	$(AM_V_GEN) ../src/mnpbc -H data/scalar-02.h -C data/scalar-02.c data/scalar-02.proto
 
 data/scalar-03.c data/scalar-03.h: data/scalar-03.proto
-	$(AM_V_GEN) ../src/mrkpbc -H data/scalar-03.h -C data/scalar-03.c data/scalar-03.proto
+	$(AM_V_GEN) ../src/mnpbc -H data/scalar-03.h -C data/scalar-03.c data/scalar-03.proto
 
 data/scalar-04.c data/scalar-04.h: data/scalar-04.proto
-	$(AM_V_GEN) ../src/mrkpbc -H data/scalar-04.h -C data/scalar-04.c data/scalar-04.proto
+	$(AM_V_GEN) ../src/mnpbc -H data/scalar-04.h -C data/scalar-04.c data/scalar-04.proto
 
 data/vector-01.c data/vector-01.h: data/vector-01.proto
-	$(AM_V_GEN) ../src/mrkpbc -H data/vector-01.h -C data/vector-01.c data/vector-01.proto
+	$(AM_V_GEN) ../src/mnpbc -H data/vector-01.h -C data/vector-01.c data/vector-01.proto
 
 data/partial-01.c data/partial-01.h: data/partial-01.proto
-	$(AM_V_GEN) ../src/mrkpbc -H data/partial-01.h -C data/partial-01.c data/partial-01.proto
+	$(AM_V_GEN) ../src/mnpbc -H data/partial-01.h -C data/partial-01.c data/partial-01.proto
 
 data/partial-02.c data/partial-02.h: data/partial-02.proto
-	$(AM_V_GEN) ../src/mrkpbc -H data/partial-02.h -C data/partial-02.c data/partial-02.proto
+	$(AM_V_GEN) ../src/mnpbc -H data/partial-02.h -C data/partial-02.c data/partial-02.proto
 
 testrun: all
 	for i in $(noinst_PROGRAMS); do if test -x ./$$i; then LD_LIBRARY_PATH=$(libdir) ./$$i; fi; done;

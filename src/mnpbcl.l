@@ -1,12 +1,12 @@
 %{
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-#include <mrkcommon/bytes.h>
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
+#include <mncommon/bytes.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
 
-#include "mrkpbc.h"
-#include "mrkpbcg.h"
+#include "mnpbc.h"
+#include "mnpbcg.h"
 
 #include "diag.h"
 
@@ -52,25 +52,25 @@ HEX [a-fA-F0-9]
 
 %%
 
-syntax      return MRKPBC_SYNTAX;
-message     return MRKPBC_MESSAGE;
-reserved    return MRKPBC_RESERVED;
-repeated    return MRKPBC_REPEATED;
-enum        return MRKPBC_ENUM;
-option      return MRKPBC_OPTION;
-oneof       return MRKPBC_ONEOF;
-import      return MRKPBC_IMPORT;
-package     return MRKPBC_PACKAGE;
+syntax      return MNPBC_SYNTAX;
+message     return MNPBC_MESSAGE;
+reserved    return MNPBC_RESERVED;
+repeated    return MNPBC_REPEATED;
+enum        return MNPBC_ENUM;
+option      return MNPBC_OPTION;
+oneof       return MNPBC_ONEOF;
+import      return MNPBC_IMPORT;
+package     return MNPBC_PACKAGE;
 
-double|float|int32|int64|uint32|uint64|sint32|sint64|fixed32|fixed64|sfixed32|sfixed64|bool|string|bytes    return MRKPBC_BUILTIN_TYPE;
+double|float|int32|int64|uint32|uint64|sint32|sint64|fixed32|fixed64|sfixed32|sfixed64|bool|string|bytes    return MNPBC_BUILTIN_TYPE;
 
-;           return MRKPBC_SEMI;
-\{          return MRKPBC_LCURLY;
-\}          return MRKPBC_RCURLY;
-=           return MRKPBC_EQUALS;
+;           return MNPBC_SEMI;
+\{          return MNPBC_LCURLY;
+\}          return MNPBC_RCURLY;
+=           return MNPBC_EQUALS;
 
-{DIGIT1}{DIGIT0}*            return MRKPBC_NZNUM;
-0|{DIGIT1}{DIGIT0}*   return MRKPBC_ZNUM;
+{DIGIT1}{DIGIT0}*            return MNPBC_NZNUM;
+0|{DIGIT1}{DIGIT0}*   return MNPBC_ZNUM;
 
 \"          BEGIN(DQ); yydqstart();
 <DQ>\\\" | <DQ>\\\\ ;
@@ -82,7 +82,7 @@ double|float|int32|int64|uint32|uint64|sint32|sint64|fixed32|fixed64|sfixed32|sf
 <DQ>\\t     ;
 <DQ>\\v     ;
 <DQ>[^"\\]+ ;
-<DQ>\"      BEGIN(INITIAL); yydqend(); return MRKPBC_DQSTR;
+<DQ>\"      BEGIN(INITIAL); yydqend(); return MNPBC_DQSTR;
 
 
 \/\*.*?\*\/ BEGIN(C1);BEGIN(INITIAL); /* TRACE("C1") */;
@@ -96,7 +96,7 @@ double|float|int32|int64|uint32|uint64|sint32|sint64|fixed32|fixed64|sfixed32|sf
 
 {SPACE}+    ; //{ TRACE("SPACE"); }
 
-{ALPHA}{WORD}*     return MRKPBC_TOKEN;
+{ALPHA}{WORD}*     return MNPBC_TOKEN;
 
 <<EOF>>     return 0;
 
@@ -104,19 +104,19 @@ double|float|int32|int64|uint32|uint64|sint32|sint64|fixed32|fixed64|sfixed32|sf
 %%
 
 void
-yyerror(UNUSED mrkpbc_ctx_t *ctx, const char *s)
+yyerror(UNUSED mnpbc_ctx_t *ctx, const char *s)
 {
     TRACE("error: %s", s);
 }
 
 int
-mrkpbc_error(void)
+mnpbc_error(void)
 {
     return 0;
 }
 
 int
-mrkpbc_scan(mrkpbc_ctx_t *ctx)
+mnpbc_scan(mnpbc_ctx_t *ctx)
 {
     int res;
     yyin = ctx->in;

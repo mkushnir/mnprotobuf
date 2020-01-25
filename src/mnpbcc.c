@@ -3,34 +3,34 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#include <mrkcommon/array.h>
-#include <mrkcommon/hash.h>
-#include <mrkcommon/bytes.h>
-#include <mrkcommon/bytestream.h>
+#include <mncommon/array.h>
+#include <mncommon/hash.h>
+#include <mncommon/bytes.h>
+#include <mncommon/bytestream.h>
 
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
 
 #include "diag.h"
 
-#include "mrkpbc.h"
+#include "mnpbc.h"
 
 
-static void analyze_backend1(mrkpbc_container_t *);
+static void analyze_backend1(mnpbc_container_t *);
 
 
 static char *
-mrkpbc_container_keyword(mrkpbc_container_t *cont)
+mnpbc_container_keyword(mnpbc_container_t *cont)
 {
     char *w;
 
-    if (cont->kind == MRKPBC_CONT_KMESSAGE) {
+    if (cont->kind == MNPBC_CONT_KMESSAGE) {
         w = "struct ";
-    } else if (cont->kind == MRKPBC_CONT_KENUM) {
+    } else if (cont->kind == MNPBC_CONT_KENUM) {
         w = "enum ";
-    } else if (cont->kind == MRKPBC_CONT_KONEOF) {
+    } else if (cont->kind == MNPBC_CONT_KONEOF) {
         w = "union ";
-    } else if (cont->kind == MRKPBC_CONT_KBUILTIN) {
+    } else if (cont->kind == MNPBC_CONT_KBUILTIN) {
         w = NULL;
     } else {
         FAIL("print_forward_decl");
@@ -41,14 +41,14 @@ mrkpbc_container_keyword(mrkpbc_container_t *cont)
 
 
 static int
-mrkpbc_wtype_from_type(mrkpbc_container_t *ty)
+mnpbc_wtype_from_type(mnpbc_container_t *ty)
 {
-    if (ty->kind == MRKPBC_CONT_KMESSAGE ||
+    if (ty->kind == MNPBC_CONT_KMESSAGE ||
         bytes_cmp(ty->pb.name, &_string) == 0 ||
         bytes_cmp(ty->pb.name, &_bytes) == 0) {
-        return MRKPB_WT_LDELIM;
+        return MNPB_WT_LDELIM;
 
-    } else if (ty->kind == MRKPBC_CONT_KENUM ||
+    } else if (ty->kind == MNPBC_CONT_KENUM ||
                bytes_cmp(ty->pb.name, &_int32) == 0 ||
                bytes_cmp(ty->pb.name, &_int64) == 0 ||
                bytes_cmp(ty->pb.name, &_uint32) == 0 ||
@@ -56,24 +56,24 @@ mrkpbc_wtype_from_type(mrkpbc_container_t *ty)
                bytes_cmp(ty->pb.name, &_sint32) == 0 ||
                bytes_cmp(ty->pb.name, &_sint64) == 0 ||
                bytes_cmp(ty->pb.name, &_bool) == 0) {
-        return MRKPB_WT_VARINT;
-    } else if (ty->kind == MRKPBC_CONT_KONEOF) {
-        return MRKPB_WT_INTERN;
+        return MNPB_WT_VARINT;
+    } else if (ty->kind == MNPBC_CONT_KONEOF) {
+        return MNPB_WT_INTERN;
     } else if (bytes_cmp(ty->pb.name, &_fixed32) == 0 ||
                bytes_cmp(ty->pb.name, &_sfixed32) == 0 ||
                bytes_cmp(ty->pb.name, &_float) == 0) {
-        return MRKPB_WT_32BIT;
+        return MNPB_WT_32BIT;
     } else if (bytes_cmp(ty->pb.name, &_fixed64) == 0 ||
                bytes_cmp(ty->pb.name, &_sfixed64) == 0 ||
                bytes_cmp(ty->pb.name, &_double) == 0) {
-        return MRKPB_WT_64BIT;
+        return MNPB_WT_64BIT;
     }
-    return MRKPB_WT_UNDEF;
+    return MNPB_WT_UNDEF;
 }
 
 
 static mnbytes_t *
-mrkpbc_module_name_upper(mrkpbc_ctx_t *ctx)
+mnpbc_module_name_upper(mnpbc_ctx_t *ctx)
 {
     mnbytes_t *res;
     res = bytes_new_from_bytes(ctx->namein);
@@ -89,7 +89,7 @@ mrkpbc_module_name_upper(mrkpbc_ctx_t *ctx)
 
 
 UNUSED static mnbytes_t *
-mrkpbc_module_name_normalized(mrkpbc_ctx_t *ctx)
+mnpbc_module_name_normalized(mnpbc_ctx_t *ctx)
 {
     mnbytes_t *res;
     res = bytes_new_from_bytes(ctx->namein);
@@ -107,7 +107,7 @@ mrkpbc_module_name_normalized(mrkpbc_ctx_t *ctx)
  * Interface *.proto.h
  */
 static mnbytes_t *
-get_field_signature(mrkpbc_field_t *field)
+get_field_signature(mnpbc_field_t *field)
 {
     mnbytes_t *res;
     char *rep;
@@ -129,14 +129,14 @@ get_field_signature(mrkpbc_field_t *field)
     } else {
         char *kw;
 
-        kw = mrkpbc_container_keyword(field->cty);
+        kw = mnpbc_container_keyword(field->cty);
         if (kw == NULL) {
             res = bytes_printf("%s%s%s",
                                BDATA(field->cty->be.fqname),
                                rep,
                                name);
         } else {
-            if (field->cty->kind == MRKPBC_CONT_KONEOF) {
+            if (field->cty->kind == MNPBC_CONT_KONEOF) {
                 res = bytes_printf("struct { uint64_t fnum; %s%s%sdata; } %s",
                                    kw,
                                    BDATA(field->cty->be.fqname),
@@ -157,15 +157,15 @@ get_field_signature(mrkpbc_field_t *field)
 
 
 static void
-print_header_pre(mrkpbc_ctx_t *ctx, mnbytestream_t *bs)
+print_header_pre(mnpbc_ctx_t *ctx, mnbytestream_t *bs)
 {
     mnbytes_t *name;
     char *buf =
         "#include <inttypes.h>\n"
-        "#include <mrkcommon/bytes.h>\n"
-        "#include <mrkcommon/bytestream.h>\n"
-        "#include <mrkcommon/util.h>\n\n"
-        "#include <mrkprotobuf.h>\n\n"
+        "#include <mncommon/bytes.h>\n"
+        "#include <mncommon/bytestream.h>\n"
+        "#include <mncommon/util.h>\n\n"
+        "#include <mnprotobuf.h>\n\n"
         "#ifdef __GCC__\n"
         "#  pragma GCC diagnostic ignored \"-Wunused-parameter\"\n"
         "#  pragma GCC diagnostic ignored \"-Wunused-variable\"\n"
@@ -181,10 +181,10 @@ print_header_pre(mrkpbc_ctx_t *ctx, mnbytestream_t *bs)
         "extern \"C\" {\n"
         "#endif\n\n";
 
-    name = mrkpbc_module_name_upper(ctx);
+    name = mnpbc_module_name_upper(ctx);
     (void)bytestream_nprintf(bs,
                             1024,
-                            "/* autogenerated by mrkpbc */\n"
+                            "/* autogenerated by mnpbc */\n"
                             "#ifndef %s_H\n"
                             "#define %s_H\n\n",
                             BDATA(name),
@@ -221,11 +221,11 @@ print_header_pre(mrkpbc_ctx_t *ctx, mnbytestream_t *bs)
 
 
 static void
-print_header_post(mrkpbc_ctx_t *ctx, mnbytestream_t *bs)
+print_header_post(mnpbc_ctx_t *ctx, mnbytestream_t *bs)
 {
     mnbytes_t *name;
 
-    name = mrkpbc_module_name_upper(ctx);
+    name = mnpbc_module_name_upper(ctx);
     (void)bytestream_nprintf(bs,
                              1024,
                              "#ifdef __cplusplus\n"
@@ -237,23 +237,23 @@ print_header_post(mrkpbc_ctx_t *ctx, mnbytestream_t *bs)
 
 static int
 print_forward_decl(UNUSED mnbytes_t *key,
-                    mrkpbc_container_t *cont,
+                    mnpbc_container_t *cont,
                     mnbytestream_t *bs)
 {
-    if (cont->kind == MRKPBC_CONT_KBUILTIN) {
+    if (cont->kind == MNPBC_CONT_KBUILTIN) {
         return 0;
     }
     (void)bytestream_nprintf(bs,
                        1024,
                        "%s%s;\n",
-                       mrkpbc_container_keyword(cont),
+                       mnpbc_container_keyword(cont),
                        BDATA(cont->be.fqname));
     return 0;
 }
 
 
 static int
-print_field_single(mrkpbc_field_t *field, mnbytestream_t *bs, char *indent)
+print_field_single(mnpbc_field_t *field, mnbytestream_t *bs, char *indent)
 {
     if (field->ty == NULL) {
         /* enum */
@@ -272,12 +272,12 @@ print_field_single(mrkpbc_field_t *field, mnbytestream_t *bs, char *indent)
             (void)bytestream_nprintf(bs, 1024, "%s;\n", BDATA(sig));
 
         } else {
-            if (field->cty != NULL && field->cty->kind == MRKPBC_CONT_KONEOF) {
+            if (field->cty != NULL && field->cty->kind == MNPBC_CONT_KONEOF) {
                 mnbytes_t *name;
-                mrkpbc_field_t **ufield;
+                mnpbc_field_t **ufield;
                 mnarray_iter_t it;
 
-                name = mrkpbc_module_name_upper(field->cty->ctx);
+                name = mnpbc_module_name_upper(field->cty->ctx);
 
                 for (ufield = array_first(&field->cty->fields, &it);
                      ufield != NULL;
@@ -308,7 +308,7 @@ print_field_single(mrkpbc_field_t *field, mnbytestream_t *bs, char *indent)
 
 
 static int
-print_field_repeated(mrkpbc_field_t *field, mnbytestream_t *bs)
+print_field_repeated(mnpbc_field_t *field, mnbytestream_t *bs)
 {
     (void)bytestream_nprintf(bs,
                             1024,
@@ -330,7 +330,7 @@ print_field_repeated(mrkpbc_field_t *field, mnbytestream_t *bs)
 
 
 static int
-print_field(mrkpbc_field_t **field, mnbytestream_t *bs)
+print_field(mnpbc_field_t **field, mnbytestream_t *bs)
 {
     int res;
     if ((*field)->flags.repeated) {
@@ -344,10 +344,10 @@ print_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
 
 static void
-print_decl_recursive(mrkpbc_container_t *cont, mnbytestream_t *bs)
+print_decl_recursive(mnpbc_container_t *cont, mnbytestream_t *bs)
 {
-    mrkpbc_container_t **pcont;
-    mrkpbc_field_t **field;
+    mnpbc_container_t **pcont;
+    mnpbc_field_t **field;
     mnarray_iter_t it;
 
     if (cont->flags.visited) {
@@ -358,8 +358,8 @@ print_decl_recursive(mrkpbc_container_t *cont, mnbytestream_t *bs)
     for (pcont = array_first(&cont->containers, &it);
          pcont != NULL;
          pcont = array_next(&cont->containers, &it)) {
-        assert((*pcont)->kind != MRKPBC_CONT_KBUILTIN);
-        if ((*pcont)->kind != MRKPBC_CONT_KBUILTIN) {
+        assert((*pcont)->kind != MNPBC_CONT_KBUILTIN);
+        if ((*pcont)->kind != MNPBC_CONT_KBUILTIN) {
             print_decl_recursive((*pcont), bs);
         }
     }
@@ -368,7 +368,7 @@ print_decl_recursive(mrkpbc_container_t *cont, mnbytestream_t *bs)
          field != NULL;
          field = array_next(&cont->fields, &it)) {
         if ((*field)->cty != NULL &&
-            (*field)->cty->kind != MRKPBC_CONT_KBUILTIN) {
+            (*field)->cty->kind != MNPBC_CONT_KBUILTIN) {
             print_decl_recursive((*field)->cty, bs);
         }
     }
@@ -376,24 +376,24 @@ print_decl_recursive(mrkpbc_container_t *cont, mnbytestream_t *bs)
     (void)bytestream_nprintf(bs,
                        1024,
                        "%s%s {\n",
-                       mrkpbc_container_keyword(cont),
+                       mnpbc_container_keyword(cont),
                        BDATA(cont->be.fqname));
 
-    if (cont->kind == MRKPBC_CONT_KMESSAGE) {
-        (void)bytestream_nprintf(bs, 1024, "    ssize_t _mrkpbcc_rawsz;\n");
+    if (cont->kind == MNPBC_CONT_KMESSAGE) {
+        (void)bytestream_nprintf(bs, 1024, "    ssize_t _mnpbcc_rawsz;\n");
     }
 
-    mrkpbc_container_traverse_fields(cont, (array_traverser_t)print_field, bs);
+    mnpbc_container_traverse_fields(cont, (array_traverser_t)print_field, bs);
     (void)bytestream_nprintf(bs, 1024, "};\n");
 }
 
 
 static int
 print_decl(UNUSED mnbytes_t *key,
-            mrkpbc_container_t *cont,
+            mnpbc_container_t *cont,
             mnbytestream_t *bs)
 {
-    if (cont->kind == MRKPBC_CONT_KBUILTIN) {
+    if (cont->kind == MNPBC_CONT_KBUILTIN) {
         return 0;
     }
     if (cont->parent != NULL) {
@@ -405,17 +405,17 @@ print_decl(UNUSED mnbytes_t *key,
 
 
 static int
-print_alloc_decl_field(mrkpbc_field_t **field, mnbytestream_t *bs)
+print_alloc_decl_field(mnpbc_field_t **field, mnbytestream_t *bs)
 {
     if ((*field)->flags.repeated) {
-        mrkpbc_container_t *cty, *cont;
+        mnpbc_container_t *cty, *cont;
         char *kwf, *kwc;
 
         cty = (*field)->cty;
-        kwf = mrkpbc_container_keyword(cty);
+        kwf = mnpbc_container_keyword(cty);
 
         cont = (*field)->parent;
-        kwc = mrkpbc_container_keyword(cont);
+        kwc = mnpbc_container_keyword(cont);
 
         (void)bytestream_nprintf(bs, 1024,
             "%s%s *%s_%s_alloc(%s%s *, int);\n",
@@ -431,9 +431,9 @@ print_alloc_decl_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
 
 static void
-print_alloc_decl(mrkpbc_container_t *cont, mnbytestream_t *bs)
+print_alloc_decl(mnpbc_container_t *cont, mnbytestream_t *bs)
 {
-    mrkpbc_container_traverse_fields(cont,
+    mnpbc_container_traverse_fields(cont,
                                      (array_traverser_t)print_alloc_decl_field,
                                      bs);
 }
@@ -441,7 +441,7 @@ print_alloc_decl(mrkpbc_container_t *cont, mnbytestream_t *bs)
 
 static int
 print_method_decl(UNUSED mnbytes_t *key,
-                  mrkpbc_container_t *cont,
+                  mnpbc_container_t *cont,
                   mnbytestream_t *bs)
 {
     char *kw;
@@ -449,11 +449,11 @@ print_method_decl(UNUSED mnbytes_t *key,
     /*
      * non-builtins messages only
      */
-    if (cont->kind != MRKPBC_CONT_KMESSAGE) {
+    if (cont->kind != MNPBC_CONT_KMESSAGE) {
         return 0;
     }
 
-    kw = mrkpbc_container_keyword(cont);
+    kw = mnpbc_container_keyword(cont);
 
     (void)bytestream_nprintf(bs,
                              1024,
@@ -521,29 +521,29 @@ print_method_decl(UNUSED mnbytes_t *key,
  * Implementation, *.proto.c
  */
 static void
-print_impl_pre(mrkpbc_ctx_t *ctx, mnbytestream_t *bs)
+print_impl_pre(mnpbc_ctx_t *ctx, mnbytestream_t *bs)
 {
     (void)bytestream_nprintf(bs,
                             1024,
-                            "/* autogenerated by mrkpbc */\n"
+                            "/* autogenerated by mnpbc */\n"
                             "#include <limits.h>\n"
                             "#include <stdlib.h>\n"
                             "#include <stdbool.h>\n"
                             "#include <stdint.h>\n"
                             "#include <string.h>\n"
-                            "#include <mrkcommon/dumpm.h>\n"
-                            "#include <mrkcommon/util.h>\n"
+                            "#include <mncommon/dumpm.h>\n"
+                            "#include <mncommon/util.h>\n"
                             "#include \"%s\"\n",
                             BDATA(ctx->nameout0));
 }
 
 
 static void
-print_new(mrkpbc_container_t *cont, mnbytestream_t *bs)
+print_new(mnpbc_container_t *cont, mnbytestream_t *bs)
 {
     char *kw;
 
-    kw = mrkpbc_container_keyword(cont);
+    kw = mnpbc_container_keyword(cont);
 
     (void)bytestream_nprintf(bs,
                              1024,
@@ -559,7 +559,7 @@ print_new(mrkpbc_container_t *cont, mnbytestream_t *bs)
                              "    %s%s *res;\n"
                              "    if ((res = malloc(sizeof(%s%s))) != NULL) "
                                  "{ memset(res, 0, sizeof(%s%s)); "
-                                 "res->_mrkpbcc_rawsz = INT_MAX; }\n"
+                                 "res->_mnpbcc_rawsz = INT_MAX; }\n"
                              "    return res;\n",
                              kw,
                              BDATA(cont->be.fqname),
@@ -574,17 +574,17 @@ print_new(mrkpbc_container_t *cont, mnbytestream_t *bs)
 
 
 static int
-print_alloc_field(mrkpbc_field_t **field, mnbytestream_t *bs)
+print_alloc_field(mnpbc_field_t **field, mnbytestream_t *bs)
 {
     if ((*field)->flags.repeated) {
-        mrkpbc_container_t *cty, *cont;
+        mnpbc_container_t *cty, *cont;
         char *kwf, *kwc;
 
         cty = (*field)->cty;
-        kwf = mrkpbc_container_keyword(cty);
+        kwf = mnpbc_container_keyword(cty);
 
         cont = (*field)->parent;
-        kwc = mrkpbc_container_keyword(cont);
+        kwc = mnpbc_container_keyword(cont);
 
         (void)bytestream_nprintf(bs, 1024,
             "%s%s *\n"
@@ -629,22 +629,22 @@ print_alloc_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
 
 static void
-print_alloc(mrkpbc_container_t *cont, mnbytestream_t *bs)
+print_alloc(mnpbc_container_t *cont, mnbytestream_t *bs)
 {
-    mrkpbc_container_traverse_fields(cont,
+    mnpbc_container_traverse_fields(cont,
                                      (array_traverser_t)print_alloc_field,
                                      bs);
 }
 
 
 static int
-print_fini_field(mrkpbc_field_t **field, mnbytestream_t *bs)
+print_fini_field(mnpbc_field_t **field, mnbytestream_t *bs)
 {
-    mrkpbc_container_t *cty;
+    mnpbc_container_t *cty;
 
     cty = (*field)->cty;
     if (cty == NULL) {
-        assert((*field)->wtype == MRKPB_WT_UNDEF);
+        assert((*field)->wtype == MNPB_WT_UNDEF);
 
         (void)bytestream_nprintf(bs, 1024,
             "    //(external:%s) %s\n",
@@ -679,7 +679,7 @@ print_fini_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                                      BDATA((*field)->be.name));
         }
 
-    } else if (cty->kind == MRKPBC_CONT_KMESSAGE) {
+    } else if (cty->kind == MNPBC_CONT_KMESSAGE) {
         if ((*field)->flags.repeated) {
             (void)bytestream_nprintf(bs, 1024,
                 "    if (msg->%s.data != NULL) { "
@@ -705,12 +705,12 @@ print_fini_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                                      BDATA((*field)->be.name));
         }
 
-    } else if (cty->kind == MRKPBC_CONT_KONEOF) {
-        mrkpbc_field_t **ufield;
+    } else if (cty->kind == MNPBC_CONT_KONEOF) {
+        mnpbc_field_t **ufield;
         mnarray_iter_t it;
 
         assert(!(*field)->flags.repeated);
-        assert((*field)->wtype == MRKPB_WT_INTERN);
+        assert((*field)->wtype == MNPB_WT_INTERN);
 
         (void)bytestream_nprintf(bs, 1024,
             "    switch (msg->%s.fnum) {\n",
@@ -719,7 +719,7 @@ print_fini_field(mrkpbc_field_t **field, mnbytestream_t *bs)
         for (ufield = array_first(&cty->fields, &it);
              ufield != NULL;
              ufield = array_next(&cty->fields, &it)) {
-            mrkpbc_container_t *ucty;
+            mnpbc_container_t *ucty;
 
             assert(!(*ufield)->flags.repeated);
 
@@ -728,7 +728,7 @@ print_fini_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                 /* extern? */
                 continue;
             }
-            //assert(ucty->kind == MRKPBC_CONT_KBUILTIN);
+            //assert(ucty->kind == MNPBC_CONT_KBUILTIN);
 
             if (bytes_cmp(ucty->pb.name, &_bytes) == 0 ||
                 bytes_cmp(ucty->pb.name, &_string) == 0) {
@@ -739,7 +739,7 @@ print_fini_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                     (*ufield)->fnum,
                     BDATA((*field)->be.name),
                     BDATA((*ufield)->be.name));
-            } else if (ucty->kind == MRKPBC_CONT_KMESSAGE) {
+            } else if (ucty->kind == MNPBC_CONT_KMESSAGE) {
                 (void)bytestream_nprintf(bs, 1024,
                     "    case %"PRId64": "
                         "%s_fini(&msg->%s.data.%s); "
@@ -786,13 +786,13 @@ print_fini_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
 
 static void
-print_fini(mrkpbc_container_t *cont, mnbytestream_t *bs)
+print_fini(mnpbc_container_t *cont, mnbytestream_t *bs)
 {
     char *kw;
 
-    assert(cont->kind == MRKPBC_CONT_KMESSAGE);
+    assert(cont->kind == MNPBC_CONT_KMESSAGE);
 
-    kw = mrkpbc_container_keyword(cont);
+    kw = mnpbc_container_keyword(cont);
 
     (void)bytestream_nprintf(bs,
                              1024,
@@ -801,7 +801,7 @@ print_fini(mrkpbc_container_t *cont, mnbytestream_t *bs)
                              kw,
                              BDATA(cont->be.fqname));
 
-    mrkpbc_container_traverse_fields(cont,
+    mnpbc_container_traverse_fields(cont,
                                      (array_traverser_t)print_fini_field,
                                      bs);
 
@@ -810,13 +810,13 @@ print_fini(mrkpbc_container_t *cont, mnbytestream_t *bs)
 
 
 static void
-print_destroy(mrkpbc_container_t *cont, mnbytestream_t *bs)
+print_destroy(mnpbc_container_t *cont, mnbytestream_t *bs)
 {
     char *kw;
 
-    assert(cont->kind == MRKPBC_CONT_KMESSAGE);
+    assert(cont->kind == MNPBC_CONT_KMESSAGE);
 
-    kw = mrkpbc_container_keyword(cont);
+    kw = mnpbc_container_keyword(cont);
 
     (void)bytestream_nprintf(bs,
                              1024,
@@ -838,31 +838,31 @@ print_destroy(mrkpbc_container_t *cont, mnbytestream_t *bs)
 
 
 static int
-print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
+print_pack_field(mnpbc_field_t **field, mnbytestream_t *bs)
 {
-    mrkpbc_container_t *cty;
+    mnpbc_container_t *cty;
 
     cty = (*field)->cty;
 
     if (cty == NULL) {
-        assert((*field)->wtype == MRKPB_WT_UNDEF);
+        assert((*field)->wtype == MNPB_WT_UNDEF);
 
         (void)bytestream_nprintf(bs, 1024,
             "    //(external:%s) %s\n",
             BDATA((*field)->ty),
             BDATA((*field)->pb.name));
 
-    } else if ((*field)->wtype == MRKPB_WT_INTERN) {
-        mrkpbc_field_t **ufield;
+    } else if ((*field)->wtype == MNPB_WT_INTERN) {
+        mnpbc_field_t **ufield;
         mnarray_iter_t it;
 
         /*
-         * MRKPB_WT_INTERN is not a "valid" wire type.  I use it as
+         * MNPB_WT_INTERN is not a "valid" wire type.  I use it as
          * a sentinel for oneof fields.
          *
          * oneof: runtime key calculation
          */
-        assert(cty->kind == MRKPBC_CONT_KONEOF);
+        assert(cty->kind == MNPBC_CONT_KONEOF);
         assert(!(*field)->flags.repeated);
 
         (void)bytestream_nprintf(bs, 1024,
@@ -872,7 +872,7 @@ print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
         for (ufield = array_first(&cty->fields, &it);
              ufield != NULL;
              ufield = array_next(&cty->fields, &it)) {
-            mrkpbc_container_t *ucty;
+            mnpbc_container_t *ucty;
 
             assert(!(*ufield)->flags.repeated);
             ucty = (*ufield)->cty;
@@ -881,37 +881,37 @@ print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                 /* external? */
                 continue;
             }
-            //assert(ucty->kind == MRKPBC_CONT_KBUILTIN);
+            //assert(ucty->kind == MNPBC_CONT_KBUILTIN);
 
             (void)bytestream_nprintf(bs, 1024,
                 "    case %"PRId64":\n",
                 (*ufield)->fnum);
 
-            if (ucty->kind == MRKPBC_CONT_KMESSAGE) {
+            if (ucty->kind == MNPBC_CONT_KMESSAGE) {
                 /*
                  * embedded tag: ldelim + fnum
                  */
                 (void)bytestream_nprintf(bs, 1024,
-                    "        if ((nwritten = mrkpb_envarint(bs, "
+                    "        if ((nwritten = mnpb_envarint(bs, "
                             "0x%08"PRIx64")) < 0) { "
                             "res = nwritten; "
                             "goto end; "
                         "} "
                         "res += nwritten;\n",
-                    MRKPB_MAKEKEY(MRKPB_WT_LDELIM, (*ufield)->fnum));
+                    MNPB_MAKEKEY(MNPB_WT_LDELIM, (*ufield)->fnum));
 
                 /*
                  * embedded message, encode as bytes
                  */
                 (void)bytestream_nprintf(bs, 1024,
-                    "        if ((nwritten = mrkpb_envarint(bs, "
+                    "        if ((nwritten = mnpb_envarint(bs, "
                             "%s(%smsg->%s.data.%s))) < 0) { "
                             "res = nwritten; "
                             "goto end; "
                         "} "
                         "res += nwritten;\n",
                     BDATA(ucty->be.sz),
-                    ucty->kind == MRKPBC_CONT_KMESSAGE ? "&" : "",
+                    ucty->kind == MNPBC_CONT_KMESSAGE ? "&" : "",
                     BDATA((*field)->be.name),
                     BDATA((*ufield)->be.name));
 
@@ -922,7 +922,7 @@ print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                     "} "
                     "res += nwritten;\n",
                     BDATA(ucty->be.encode),
-                    ucty->kind == MRKPBC_CONT_KMESSAGE ? "&" : "",
+                    ucty->kind == MNPBC_CONT_KMESSAGE ? "&" : "",
                     BDATA((*field)->be.name),
                     BDATA((*ufield)->be.name));
 
@@ -934,19 +934,19 @@ print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                     BDATA((*field)->be.name),
                     BDATA((*ufield)->be.name),
                     BDATA(ucty->be.fqname),
-                    MRKPB_WT_NUMERIC((*ufield)->wtype) ? "0" : "NULL");
+                    MNPB_WT_NUMERIC((*ufield)->wtype) ? "0" : "NULL");
 
                 /*
                  * normal tag: wtype + fnum
                  */
                 (void)bytestream_nprintf(bs, 1024,
-                    "        if ((nwritten = mrkpb_envarint(bs, "
+                    "        if ((nwritten = mnpb_envarint(bs, "
                             "0x%08"PRIx64")) < 0) { "
                             "res = nwritten; "
                             "goto end; "
                         "} "
                         "res += nwritten;\n",
-                    MRKPB_MAKEKEY((*ufield)->wtype, (*ufield)->fnum));
+                    MNPB_MAKEKEY((*ufield)->wtype, (*ufield)->fnum));
 
                 (void)bytestream_nprintf(bs, 1024,
                     "        if ((nwritten = %s(bs, %smsg->%s.data.%s)) < 0) { "
@@ -955,7 +955,7 @@ print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                     "} "
                     "res += nwritten;\n",
                     BDATA(ucty->be.encode),
-                    ucty->kind == MRKPBC_CONT_KMESSAGE ? "&" : "",
+                    ucty->kind == MNPBC_CONT_KMESSAGE ? "&" : "",
                     BDATA((*field)->be.name),
                     BDATA((*ufield)->be.name));
 
@@ -986,21 +986,21 @@ print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             "}\n",
             BDATA((*field)->be.name),
             BDATA(cty->be.sz),
-            cty->kind == MRKPBC_CONT_KMESSAGE ? "&" : "",
+            cty->kind == MNPBC_CONT_KMESSAGE ? "&" : "",
             BDATA((*field)->be.name));
 
         (void)bytestream_nprintf(bs, 1024, "    if (sz > 0) {\n");
 
         (void)bytestream_nprintf(bs, 1024,
-            "        if ((nwritten = mrkpb_envarint(bs, 0x%08"PRIx64")) < 0) { "
+            "        if ((nwritten = mnpb_envarint(bs, 0x%08"PRIx64")) < 0) { "
                      "res = nwritten; "
                      "goto end; "
             "} "
             "res += nwritten;\n",
-            MRKPB_MAKEKEY(MRKPB_WT_LDELIM, (*field)->fnum));
+            MNPB_MAKEKEY(MNPB_WT_LDELIM, (*field)->fnum));
 
         (void)bytestream_nprintf(bs, 1024,
-            "        if ((nwritten = mrkpb_envarint(bs, sz)) < 0) { "
+            "        if ((nwritten = mnpb_envarint(bs, sz)) < 0) { "
                      "res = nwritten; "
                      "goto end; "
             "} res += nwritten;\n");
@@ -1011,9 +1011,9 @@ print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
         (void)bytestream_nprintf(bs, 1024,
             "        for (size_t i = 0; i < msg->%s.sz; ++i) { ",
             BDATA((*field)->be.name));
-        if (cty->kind == MRKPBC_CONT_KMESSAGE) {
+        if (cty->kind == MNPBC_CONT_KMESSAGE) {
             (void)bytestream_nprintf(bs, 1024,
-                "if ((nwritten = mrkpb_envarint(bs, %s(&msg->%s.data[i]))) < 0) { "
+                "if ((nwritten = mnpb_envarint(bs, %s(&msg->%s.data[i]))) < 0) { "
                     "res = nwritten; goto end; "
                 "} "
                 "res += nwritten; ",
@@ -1029,7 +1029,7 @@ print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                      "res += nwritten; "
             "}\n",
             BDATA(cty->be.encode),
-            cty->kind == MRKPBC_CONT_KMESSAGE ? "&" : "",
+            cty->kind == MNPBC_CONT_KMESSAGE ? "&" : "",
             BDATA((*field)->be.name));
 
         (void)bytestream_nprintf(bs, 1024, "    }\n");
@@ -1038,14 +1038,14 @@ print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
         /*
          * normal tag: wtype + fnum
          */
-        if (cty->kind != MRKPBC_CONT_KMESSAGE) {
+        if (cty->kind != MNPBC_CONT_KMESSAGE) {
             /* builtins and enums */
             (void)bytestream_nprintf(bs, 1024,
                 "    if (msg->%s != (%s%s)%s) {\n",
                 BDATA((*field)->be.name),
-                cty->kind == MRKPBC_CONT_KENUM ? "enum " : "",
+                cty->kind == MNPBC_CONT_KENUM ? "enum " : "",
                 BDATA(cty->be.fqname),
-                MRKPB_WT_NUMERIC((*field)->wtype) ? "0" : "NULL");
+                MNPB_WT_NUMERIC((*field)->wtype) ? "0" : "NULL");
         } else {
             (void)bytestream_nprintf(bs, 1024,
                 "    if ((sz = %s(&msg->%s)) != 0) {\n",
@@ -1054,19 +1054,19 @@ print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
         }
 
         (void)bytestream_nprintf(bs, 1024,
-            "        if ((nwritten = mrkpb_envarint(bs, 0x%08"PRIx64")) < 0) { "
+            "        if ((nwritten = mnpb_envarint(bs, 0x%08"PRIx64")) < 0) { "
                 "res = nwritten; "
                 "goto end; "
             "} "
             "res += nwritten;\n",
-            MRKPB_MAKEKEY((*field)->wtype, (*field)->fnum));
+            MNPB_MAKEKEY((*field)->wtype, (*field)->fnum));
 
-        if (cty->kind == MRKPBC_CONT_KMESSAGE) {
+        if (cty->kind == MNPBC_CONT_KMESSAGE) {
             /*
              * embedded message, encode as bytes
              */
             (void)bytestream_nprintf(bs, 1024,
-                "        if ((nwritten = mrkpb_envarint(bs, sz)) < 0) { "
+                "        if ((nwritten = mnpb_envarint(bs, sz)) < 0) { "
                     "res = nwritten; "
                     "goto end; "
                 "} "
@@ -1080,7 +1080,7 @@ print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             "} "
             "res += nwritten;\n",
             BDATA(cty->be.encode),
-            cty->kind == MRKPBC_CONT_KMESSAGE ? "&" : "",
+            cty->kind == MNPBC_CONT_KMESSAGE ? "&" : "",
             BDATA((*field)->be.name));
 
         (void)bytestream_nprintf(bs, 1024, "    }\n");
@@ -1091,13 +1091,13 @@ print_pack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
 
 static void
-print_pack(mrkpbc_container_t *cont, mnbytestream_t *bs)
+print_pack(mnpbc_container_t *cont, mnbytestream_t *bs)
 {
     char *kw;
 
-    assert(cont->kind == MRKPBC_CONT_KMESSAGE);
+    assert(cont->kind == MNPBC_CONT_KMESSAGE);
 
-    kw = mrkpbc_container_keyword(cont);
+    kw = mnpbc_container_keyword(cont);
 
     (void)bytestream_nprintf(bs,
                              1024,
@@ -1111,7 +1111,7 @@ print_pack(mrkpbc_container_t *cont, mnbytestream_t *bs)
                              kw,
                              BDATA(cont->be.fqname));
 
-    mrkpbc_container_traverse_fields(cont,
+    mnpbc_container_traverse_fields(cont,
                                      (array_traverser_t)print_pack_field,
                                      bs);
 
@@ -1123,39 +1123,39 @@ print_pack(mrkpbc_container_t *cont, mnbytestream_t *bs)
 
 
 static int
-print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
+print_unpack_field(mnpbc_field_t **field, mnbytestream_t *bs)
 {
-    mrkpbc_container_t *cty;
+    mnpbc_container_t *cty;
 
     cty = (*field)->cty;
 
     if (cty == NULL) {
-        assert((*field)->wtype == MRKPB_WT_UNDEF);
+        assert((*field)->wtype == MNPB_WT_UNDEF);
 
         (void)bytestream_nprintf(bs, 1024,
             "    //(external:%s) %s\n",
             BDATA((*field)->ty),
             BDATA((*field)->pb.name));
 
-    } else if ((*field)->wtype == MRKPB_WT_INTERN) {
-        mrkpbc_field_t **ufield;
-        mrkpbc_field_t **cfield;
+    } else if ((*field)->wtype == MNPB_WT_INTERN) {
+        mnpbc_field_t **ufield;
+        mnpbc_field_t **cfield;
         mnarray_iter_t uit;
         mnarray_iter_t cit;
 
         /*
-         * MRKPB_WT_INTERN is not a "valid" wire type.  I use it as
+         * MNPB_WT_INTERN is not a "valid" wire type.  I use it as
          * a sentinel for oneof fields.
          *
          * oneof: runtime key calculation
          */
-        assert(cty->kind == MRKPBC_CONT_KONEOF);
+        assert(cty->kind == MNPBC_CONT_KONEOF);
         assert(!(*field)->flags.repeated);
 
         for (ufield = array_first(&cty->fields, &uit);
              ufield != NULL;
              ufield = array_next(&cty->fields, &uit)) {
-            mrkpbc_container_t *ucty;
+            mnpbc_container_t *ucty;
 
             assert(!(*ufield)->flags.repeated);
             ucty = (*ufield)->cty;
@@ -1163,7 +1163,7 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                 /* external? */
                 continue;
             }
-            //assert(ucty->kind == MRKPBC_CONT_KBUILTIN);
+            //assert(ucty->kind == MNPBC_CONT_KBUILTIN);
             //
             //
             //
@@ -1183,10 +1183,10 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             for (cfield = array_first(&cty->fields, &cit);
                  cfield != NULL;
                  cfield = array_next(&cty->fields, &cit)) {
-                mrkpbc_container_t *ccty;
+                mnpbc_container_t *ccty;
 
                 ccty = (*cfield)->cty;
-                if (ccty->kind == MRKPBC_CONT_KMESSAGE) {
+                if (ccty->kind == MNPBC_CONT_KMESSAGE) {
                     (void)bytestream_nprintf(bs, 1024,
                         "            case %"PRId64": %s_fini(&msg->%s.data.%s); break;\n",
                         (*cfield)->fnum,
@@ -1194,7 +1194,7 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                         BDATA((*field)->be.name),
                         BDATA((*cfield)->be.name));
                 } else {
-                    if (!MRKPB_WT_NUMERIC((*cfield)->wtype)) {
+                    if (!MNPB_WT_NUMERIC((*cfield)->wtype)) {
                         (void)bytestream_nprintf(bs, 1024,
                             "            case %"PRId64": "
                                 "BYTES_DECREF(&msg->%s.data.%s); break;\n",
@@ -1209,15 +1209,15 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                 "            }\n");
 
             /* write new value */
-            if (ucty->kind == MRKPBC_CONT_KMESSAGE) {
-                assert((*ufield)->wtype == MRKPB_WT_LDELIM);
+            if (ucty->kind == MNPBC_CONT_KMESSAGE) {
+                assert((*ufield)->wtype == MNPB_WT_LDELIM);
                 (void)bytestream_nprintf(bs, 1024,
-                    "            if (wtype != %d) { res = MRKPB_ETYPE; "
+                    "            if (wtype != %d) { res = MNPB_ETYPE; "
                                     "goto end; }\n"
-                    "            if ((nread = mrkpb_devarint(bs, fd, &sz)) "
+                    "            if ((nread = mnpb_devarint(bs, fd, &sz)) "
                                     "< 0) { res = nread; goto end; } "
                                     "res += nread;\n"
-                    "            msg->%s.data.%s._mrkpbcc_rawsz = sz;\n"
+                    "            msg->%s.data.%s._mnpbcc_rawsz = sz;\n"
                     "            if ((nread = %s(bs, fd, &msg->%s.data.%s)) "
                                     "< 0) { res = nread; goto end;}\n"
                     "            // if (nread != (ssize_t)sz) { "
@@ -1252,15 +1252,15 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
 
 #if 0
-            if (ucty->kind == MRKPBC_CONT_KMESSAGE) {
-                assert((*ufield)->wtype == MRKPB_WT_LDELIM);
+            if (ucty->kind == MNPBC_CONT_KMESSAGE) {
+                assert((*ufield)->wtype == MNPB_WT_LDELIM);
                 FAIL("print_unpack_field");
 
-            } else if (ucty->kind == MRKPBC_CONT_KENUM) {
+            } else if (ucty->kind == MNPBC_CONT_KENUM) {
                 FAIL("print_unpack_field");
 
-            } else if (ucty->kind == MRKPBC_CONT_KBUILTIN) {
-                mrkpbc_field_t **cfield;
+            } else if (ucty->kind == MNPBC_CONT_KBUILTIN) {
+                mnpbc_field_t **cfield;
                 mnarray_iter_t cit;
 
                 (void)bytestream_nprintf(bs, 1024,
@@ -1280,7 +1280,7 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                         continue;
                     }
 
-                    if (!MRKPB_WT_NUMERIC((*cfield)->wtype)) {
+                    if (!MNPB_WT_NUMERIC((*cfield)->wtype)) {
                         (void)bytestream_nprintf(bs, 1024,
                             "            case %"PRId64": "
                                 "BYTES_DECREF(&msg->%s.data.%s); break;\n",
@@ -1315,26 +1315,26 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
 
     } else if ((*field)->flags.repeated) {
-        mrkpbc_container_t *cont;
+        mnpbc_container_t *cont;
         char *kwf;
 
         /*
          * packed
          */
-        assert(cty->kind != MRKPBC_CONT_KONEOF);
-        assert((*field)->wtype != MRKPB_WT_INTERN);
+        assert(cty->kind != MNPBC_CONT_KONEOF);
+        assert((*field)->wtype != MNPB_WT_INTERN);
         /*
          * wither enum or message or builtin
          */
-        kwf = mrkpbc_container_keyword(cty);
+        kwf = mnpbc_container_keyword(cty);
 
         cont = (*field)->parent;
         assert(cont!= NULL);
 
         (void)bytestream_nprintf(bs, 1024,
             "        case %"PRId64":\n"
-            "            if (wtype != %d) { res = MRKPB_ETYPE; goto end; }\n"
-            "            if ((nread = mrkpb_devarint(bs, fd, &sz)) < 0) { "
+            "            if (wtype != %d) { res = MNPB_ETYPE; goto end; }\n"
+            "            if ((nread = mnpb_devarint(bs, fd, &sz)) < 0) { "
                             "res = nread; goto end; } res += nread;\n"
             "            for (nread_item = 0, nread = 0; "
                                 "nread_item < (ssize_t)sz; ) {\n"
@@ -1342,21 +1342,21 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             "                //uint64_t etag;\n"
             "                uint64_t esz;\n"
             "                if ((item = %s_%s_alloc(msg, 1)) == NULL) { "
-                                "res = MRKPB_EMEMORY; goto end; }\n"
+                                "res = MNPB_EMEMORY; goto end; }\n"
             ,
             (*field)->fnum,
-            MRKPB_WT_LDELIM,
+            MNPB_WT_LDELIM,
             kwf == NULL ? "" : kwf,
             BDATA(cty->be.fqname),
             BDATA(cont->be.fqname),
             BDATA((*field)->be.name));
 
-        if (cty->kind == MRKPBC_CONT_KMESSAGE) {
+        if (cty->kind == MNPBC_CONT_KMESSAGE) {
             (void)bytestream_nprintf(bs, 1024,
-                "                if ((nread = mrkpb_devarint(bs, fd, "
+                "                if ((nread = mnpb_devarint(bs, fd, "
                                     "&esz)) < 0) { "
                                     "res = nread; goto end; } "
-                                    "item->_mrkpbcc_rawsz = esz; "
+                                    "item->_mnpbcc_rawsz = esz; "
                                     "nread_item += nread;\n"
                 );
             (void)bytestream_nprintf(bs, 1024,
@@ -1365,7 +1365,7 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                                     "nread_item += nread;\n",
                 BDATA(cty->be.decode));
 
-        } else if (cty->kind == MRKPBC_CONT_KENUM) {
+        } else if (cty->kind == MNPBC_CONT_KENUM) {
             (void)bytestream_nprintf(bs, 1024,
                 "                { int64_t v; if ((nread = "
                                     "%s(bs, fd, -1, &v)) < 0) { "
@@ -1373,7 +1373,7 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                                     "nread_item += nread; }\n",
                 BDATA(cty->be.decode));
 
-        } else if (cty->kind == MRKPBC_CONT_KBUILTIN) {
+        } else if (cty->kind == MNPBC_CONT_KBUILTIN) {
             (void)bytestream_nprintf(bs, 1024,
                 "                if ((nread = %s(bs, fd, -1, item)) < 0) { "
                                     "res = nread; goto end; } "
@@ -1390,14 +1390,14 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             );
 
     } else {
-        if (cty->kind == MRKPBC_CONT_KMESSAGE) {
-            assert((*field)->wtype == MRKPB_WT_LDELIM);
+        if (cty->kind == MNPBC_CONT_KMESSAGE) {
+            assert((*field)->wtype == MNPB_WT_LDELIM);
             (void)bytestream_nprintf(bs, 1024,
                 "        case %"PRId64":\n"
-                "            if (wtype != %d) { res = MRKPB_ETYPE; goto end; }\n"
-                "            if ((nread = mrkpb_devarint(bs, fd, &sz)) < 0) { "
+                "            if (wtype != %d) { res = MNPB_ETYPE; goto end; }\n"
+                "            if ((nread = mnpb_devarint(bs, fd, &sz)) < 0) { "
                                 "res = nread; goto end; } res += nread;\n"
-                "            msg->%s._mrkpbcc_rawsz = (ssize_t)sz;\n"
+                "            msg->%s._mnpbcc_rawsz = (ssize_t)sz;\n"
                 "            if ((nread = %s(bs, fd, &msg->%s)) < 0) { "
                                 "res = nread; goto end; }\n"
                 "            // if (nread != (ssize_t)sz) { "
@@ -1410,7 +1410,7 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                 BDATA(cty->be.decode),
                 BDATA((*field)->be.name));
 
-        } else if (cty->kind == MRKPBC_CONT_KENUM) {
+        } else if (cty->kind == MNPBC_CONT_KENUM) {
             (void)bytestream_nprintf(bs, 1024,
                 "        case %"PRId64":\n"
                 "            { int64_t v; "
@@ -1423,7 +1423,7 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                 (*field)->fnum,
                 BDATA(cty->be.decode),
                 BDATA((*field)->be.name));
-        } else if (cty->kind == MRKPBC_CONT_KBUILTIN) {
+        } else if (cty->kind == MNPBC_CONT_KBUILTIN) {
             /*
              * normal tag: wtype + fnum
              */
@@ -1447,13 +1447,13 @@ print_unpack_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
 
 static void
-print_unpack(mrkpbc_container_t *cont, mnbytestream_t *bs)
+print_unpack(mnpbc_container_t *cont, mnbytestream_t *bs)
 {
     char *kw;
 
-    assert(cont->kind == MRKPBC_CONT_KMESSAGE);
+    assert(cont->kind == MNPBC_CONT_KMESSAGE);
 
-    kw = mrkpbc_container_keyword(cont);
+    kw = mnpbc_container_keyword(cont);
 
     (void)bytestream_nprintf(bs,
                              1024,
@@ -1464,10 +1464,10 @@ print_unpack(mrkpbc_container_t *cont, mnbytestream_t *bs)
                              "    ssize_t nread = 0;\n"
                              "    ssize_t nread_item;\n"
                              "    uint64_t sz;\n"
-                             "    while (res < msg->_mrkpbcc_rawsz) {\n"
+                             "    while (res < msg->_mnpbcc_rawsz) {\n"
                              "        uint64_t tag;\n"
                              "        int wtype;\n"
-                             "        if ((nread = mrkpb_unpack_key("
+                             "        if ((nread = mnpb_unpack_key("
                                           "bs, fd, &tag, &wtype)) < 0) { "
                                           "res = nread; goto end; }\n"
                              "        res += nread;\n"
@@ -1477,13 +1477,13 @@ print_unpack(mrkpbc_container_t *cont, mnbytestream_t *bs)
                              kw,
                              BDATA(cont->be.fqname));
 
-    mrkpbc_container_traverse_fields(cont,
+    mnpbc_container_traverse_fields(cont,
                                      (array_traverser_t)print_unpack_field,
                                      bs);
 
     (void)bytestream_nprintf(bs, 1024,
                              "        default:\n"
-                             "            if ((nread = mrkpb_devoid(bs, fd, "
+                             "            if ((nread = mnpb_devoid(bs, fd, "
                                             "tag, wtype)) < 0) { "
                                             "res = nread; goto end; "
                                             "} res += nread; break;\n"
@@ -1495,31 +1495,31 @@ print_unpack(mrkpbc_container_t *cont, mnbytestream_t *bs)
 
 
 static int
-print_sz_field(mrkpbc_field_t **field, mnbytestream_t *bs)
+print_sz_field(mnpbc_field_t **field, mnbytestream_t *bs)
 {
-    mrkpbc_container_t *cty;
+    mnpbc_container_t *cty;
 
     cty = (*field)->cty;
 
     if (cty == NULL) {
-        assert((*field)->wtype == MRKPB_WT_UNDEF);
+        assert((*field)->wtype == MNPB_WT_UNDEF);
 
         (void)bytestream_nprintf(bs, 1024,
             "    //(external:%s) %s\n",
             BDATA((*field)->ty),
             BDATA((*field)->pb.name));
 
-    } else if ((*field)->wtype == MRKPB_WT_INTERN) {
-        mrkpbc_field_t **ufield;
+    } else if ((*field)->wtype == MNPB_WT_INTERN) {
+        mnpbc_field_t **ufield;
         mnarray_iter_t it;
 
         /*
-         * MRKPB_WT_INTERN is not a "valid" wire type.  I use it as
+         * MNPB_WT_INTERN is not a "valid" wire type.  I use it as
          * a sentinel for oneof fields.
          *
          * oneof: runtime key calculation
          */
-        assert(cty->kind == MRKPBC_CONT_KONEOF);
+        assert(cty->kind == MNPBC_CONT_KONEOF);
         assert(!(*field)->flags.repeated);
 
         (void)bytestream_nprintf(bs, 1024,
@@ -1529,7 +1529,7 @@ print_sz_field(mrkpbc_field_t **field, mnbytestream_t *bs)
         for (ufield = array_first(&cty->fields, &it);
              ufield != NULL;
              ufield = array_next(&cty->fields, &it)) {
-            mrkpbc_container_t *ucty;
+            mnpbc_container_t *ucty;
 
             assert(!(*ufield)->flags.repeated);
 
@@ -1538,17 +1538,17 @@ print_sz_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                 /* external? */
                 continue;
             }
-            //assert(ucty->kind == MRKPBC_CONT_KBUILTIN);
+            //assert(ucty->kind == MNPBC_CONT_KBUILTIN);
 
             (void)bytestream_nprintf(bs, 1024,
                 "    case %"PRId64":\n",
                 (*ufield)->fnum);
 
-            if (ucty->kind == MRKPBC_CONT_KMESSAGE) {
+            if (ucty->kind == MNPBC_CONT_KMESSAGE) {
                 (void)bytestream_nprintf(bs, 1024,
-                    "        res += mrkpb_szvarint(0x%08"PRId64") + "
+                    "        res += mnpb_szvarint(0x%08"PRId64") + "
                                 "%s(&msg->%s.data.%s); break;\n",
-                    MRKPB_MAKEKEY(MRKPB_WT_LDELIM, (*ufield)->fnum),
+                    MNPB_MAKEKEY(MNPB_WT_LDELIM, (*ufield)->fnum),
                     BDATA(ucty->be.sz),
                     BDATA((*field)->be.name),
                     BDATA((*ufield)->be.name));
@@ -1556,13 +1556,13 @@ print_sz_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             } else {
                 (void)bytestream_nprintf(bs, 1024,
                     "        if (msg->%s.data.%s != (%s)%s) { "
-                                "res += mrkpb_szvarint(0x%08"PRId64") + "
+                                "res += mnpb_szvarint(0x%08"PRId64") + "
                                 "%s(msg->%s.data.%s); } break;\n",
                     BDATA((*field)->be.name),
                     BDATA((*ufield)->be.name),
                     BDATA(ucty->be.fqname),
-                    MRKPB_WT_NUMERIC((*ufield)->wtype) ? "0" : "NULL",
-                    MRKPB_MAKEKEY((*ufield)->wtype, (*ufield)->fnum),
+                    MNPB_WT_NUMERIC((*ufield)->wtype) ? "0" : "NULL",
+                    MNPB_MAKEKEY((*ufield)->wtype, (*ufield)->fnum),
                     BDATA(ucty->be.sz),
                     BDATA((*field)->be.name),
                     BDATA((*ufield)->be.name));
@@ -1584,43 +1584,43 @@ print_sz_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             "}\n",
             BDATA((*field)->be.name),
             BDATA(cty->be.sz),
-            cty->kind == MRKPBC_CONT_KMESSAGE ? "&" : "",
+            cty->kind == MNPBC_CONT_KMESSAGE ? "&" : "",
             BDATA((*field)->be.name));
 
         (void)bytestream_nprintf(bs, 1024,
             "    if (n > 0) { "
-            "res += mrkpb_szvarint(0x%08"PRIx64") + mrkpb_szvarint(n) + n; }\n",
-            MRKPB_MAKEKEY(MRKPB_WT_LDELIM, (*field)->fnum));
+            "res += mnpb_szvarint(0x%08"PRIx64") + mnpb_szvarint(n) + n; }\n",
+            MNPB_MAKEKEY(MNPB_WT_LDELIM, (*field)->fnum));
 
     } else {
-        if ((cty)->kind == MRKPBC_CONT_KMESSAGE) {
-            assert((*field)->wtype == MRKPB_WT_LDELIM);
+        if ((cty)->kind == MNPBC_CONT_KMESSAGE) {
+            assert((*field)->wtype == MNPB_WT_LDELIM);
             (void)bytestream_nprintf(bs, 1024,
                 "    if ((n = %s(&msg->%s)) > 0) { "
-                "res += mrkpb_szvarint(0x%08"PRIx64") + n; "
+                "res += mnpb_szvarint(0x%08"PRIx64") + n; "
                 "}\n",
                 BDATA(cty->be.sz),
                 BDATA((*field)->be.name),
-                MRKPB_MAKEKEY((*field)->wtype, (*field)->fnum)
+                MNPB_MAKEKEY((*field)->wtype, (*field)->fnum)
                 );
 
-        } else if ((*field)->wtype == MRKPB_WT_LDELIM) {
+        } else if ((*field)->wtype == MNPB_WT_LDELIM) {
             (void)bytestream_nprintf(bs, 1024,
                 "    if (msg->%s != NULL) { "
-                "res += mrkpb_szvarint(0x%08"PRIx64") + %s(msg->%s); "
+                "res += mnpb_szvarint(0x%08"PRIx64") + %s(msg->%s); "
                 "}\n",
                 BDATA((*field)->be.name),
-                MRKPB_MAKEKEY((*field)->wtype, (*field)->fnum),
+                MNPB_MAKEKEY((*field)->wtype, (*field)->fnum),
                 BDATA(cty->be.sz),
                 BDATA((*field)->be.name));
 
-        } else if (MRKPB_WT_NUMERIC((*field)->wtype)) {
+        } else if (MNPB_WT_NUMERIC((*field)->wtype)) {
             (void)bytestream_nprintf(bs, 1024,
                 "    if (msg->%s != 0) { "
-                "res += mrkpb_szvarint(0x%08"PRIx64") + %s(msg->%s); "
+                "res += mnpb_szvarint(0x%08"PRIx64") + %s(msg->%s); "
                 "}\n",
                 BDATA((*field)->be.name),
-                MRKPB_MAKEKEY((*field)->wtype, (*field)->fnum),
+                MNPB_MAKEKEY((*field)->wtype, (*field)->fnum),
                 BDATA(cty->be.sz),
                 BDATA((*field)->be.name));
 
@@ -1634,13 +1634,13 @@ print_sz_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
 
 static void
-print_sz(mrkpbc_container_t *cont, mnbytestream_t *bs)
+print_sz(mnpbc_container_t *cont, mnbytestream_t *bs)
 {
     char *kw;
 
-    assert(cont->kind == MRKPBC_CONT_KMESSAGE);
+    assert(cont->kind == MNPBC_CONT_KMESSAGE);
 
-    kw = mrkpbc_container_keyword(cont);
+    kw = mnpbc_container_keyword(cont);
 
     (void)bytestream_nprintf(bs,
                              1024,
@@ -1652,7 +1652,7 @@ print_sz(mrkpbc_container_t *cont, mnbytestream_t *bs)
                              kw,
                              BDATA(cont->be.fqname));
 
-    mrkpbc_container_traverse_fields(cont,
+    mnpbc_container_traverse_fields(cont,
                                      (array_traverser_t)print_sz_field,
                                      bs);
 
@@ -1661,19 +1661,19 @@ print_sz(mrkpbc_container_t *cont, mnbytestream_t *bs)
 
 
 static void
-print_rawsz(mrkpbc_container_t *cont, mnbytestream_t *bs)
+print_rawsz(mnpbc_container_t *cont, mnbytestream_t *bs)
 {
     char *kw;
 
-    assert(cont->kind == MRKPBC_CONT_KMESSAGE);
+    assert(cont->kind == MNPBC_CONT_KMESSAGE);
 
-    kw = mrkpbc_container_keyword(cont);
+    kw = mnpbc_container_keyword(cont);
 
     (void)bytestream_nprintf(bs,
                              1024,
                              "ssize_t\n"
                              "%s(%s%s *msg, ssize_t rawsz)\n{\n"
-                             "    msg->_mrkpbcc_rawsz = rawsz;\n"
+                             "    msg->_mnpbcc_rawsz = rawsz;\n"
                              "    return rawsz;\n"
                              "}\n",
                              BDATA(cont->be.rawsz),
@@ -1684,37 +1684,37 @@ print_rawsz(mrkpbc_container_t *cont, mnbytestream_t *bs)
 
 
 static int
-print_dump_field(mrkpbc_field_t **field, mnbytestream_t *bs)
+print_dump_field(mnpbc_field_t **field, mnbytestream_t *bs)
 {
-    mrkpbc_container_t *cty;
+    mnpbc_container_t *cty;
 
     (void)bytestream_nprintf(bs, 1024,
         "    res += bytestream_nprintf(bs, 1024, \"%"PRId64":%s:%s=\");\n",
         (*field)->fnum,
-        MRKPB_WT_CHAR((*field)->wtype),
+        MNPB_WT_CHAR((*field)->wtype),
         BDATA((*field)->pb.name));
 
     cty = (*field)->cty;
 
     if (cty == NULL) {
-        assert((*field)->wtype == MRKPB_WT_UNDEF);
+        assert((*field)->wtype == MNPB_WT_UNDEF);
 
         (void)bytestream_nprintf(bs, 1024,
             "    res += bytestream_nprintf(bs, 1024, "
             "\"<%s %s>\");\n",
             BDATA((*field)->ty),
             BDATA((*field)->pb.name));
-    } else if ((*field)->wtype == MRKPB_WT_INTERN) {
-        mrkpbc_field_t **ufield;
+    } else if ((*field)->wtype == MNPB_WT_INTERN) {
+        mnpbc_field_t **ufield;
         mnarray_iter_t it;
 
         /*
-         * MRKPB_WT_INTERN is not a "valid" wire type.  I use it as
+         * MNPB_WT_INTERN is not a "valid" wire type.  I use it as
          * a sentinel for oneof fields.
          *
          * oneof: runtime key calculation
          */
-        assert(cty->kind == MRKPBC_CONT_KONEOF);
+        assert(cty->kind == MNPBC_CONT_KONEOF);
         assert(!(*field)->flags.repeated);
 
         (void)bytestream_nprintf(bs, 1024,
@@ -1724,7 +1724,7 @@ print_dump_field(mrkpbc_field_t **field, mnbytestream_t *bs)
         for (ufield = array_first(&cty->fields, &it);
              ufield != NULL;
              ufield = array_next(&cty->fields, &it)) {
-            mrkpbc_container_t *ucty;
+            mnpbc_container_t *ucty;
 
             assert(!(*ufield)->flags.repeated);
             ucty = (*ufield)->cty;
@@ -1732,16 +1732,16 @@ print_dump_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                 /* external? */
                 continue;
             }
-            //assert(ucty->kind == MRKPBC_CONT_KBUILTIN);
+            //assert(ucty->kind == MNPBC_CONT_KBUILTIN);
 
-            //if (ucty->kind == MRKPBC_CONT_KMESSAGE) {
+            //if (ucty->kind == MNPBC_CONT_KMESSAGE) {
             //    (void)bytestream_nprintf(bs, 1024,
             //        "    case %"PRId64":\n"
             //        "        res += bytestream_nprintf(bs, 1024, \"%"PRId64":%s:%s\");\n"
             //        ,
             //        (*ufield)->fnum,
             //        (*ufield)->fnum,
-            //        MRKPB_WT_CHAR((*ufield)->wtype),
+            //        MNPB_WT_CHAR((*ufield)->wtype),
             //        BDATA((*ufield)->be.name),
             //        );
             //} else {
@@ -1754,10 +1754,10 @@ print_dump_field(mrkpbc_field_t **field, mnbytestream_t *bs)
                 "        break;\n",
                 (*ufield)->fnum,
                 (*ufield)->fnum,
-                MRKPB_WT_CHAR((*ufield)->wtype),
+                MNPB_WT_CHAR((*ufield)->wtype),
                 BDATA((*ufield)->be.name),
                 BDATA(ucty->be.dump),
-                ucty->kind == MRKPBC_CONT_KMESSAGE ? "&" : "",
+                ucty->kind == MNPBC_CONT_KMESSAGE ? "&" : "",
                 BDATA((*field)->be.name),
                 BDATA((*ufield)->be.name));
         }
@@ -1778,7 +1778,7 @@ print_dump_field(mrkpbc_field_t **field, mnbytestream_t *bs)
             "}\n",
             BDATA((*field)->be.name),
             BDATA(cty->be.dump),
-            cty->kind == MRKPBC_CONT_KMESSAGE ? "&" : "",
+            cty->kind == MNPBC_CONT_KMESSAGE ? "&" : "",
             BDATA((*field)->be.name));
 
         (void)bytestream_nprintf(bs, 1024,
@@ -1787,7 +1787,7 @@ print_dump_field(mrkpbc_field_t **field, mnbytestream_t *bs)
         (void)bytestream_nprintf(bs, 1024,
             "    res += %s(bs, %smsg->%s);\n",
             BDATA(cty->be.dump),
-            cty->kind == MRKPBC_CONT_KMESSAGE ? "&" : "",
+            cty->kind == MNPBC_CONT_KMESSAGE ? "&" : "",
             BDATA((*field)->be.name));
     }
 
@@ -1799,13 +1799,13 @@ print_dump_field(mrkpbc_field_t **field, mnbytestream_t *bs)
 
 
 static void
-print_dump(mrkpbc_container_t *cont, mnbytestream_t *bs)
+print_dump(mnpbc_container_t *cont, mnbytestream_t *bs)
 {
     char *kw;
 
-    assert(cont->kind == MRKPBC_CONT_KMESSAGE);
+    assert(cont->kind == MNPBC_CONT_KMESSAGE);
 
-    kw = mrkpbc_container_keyword(cont);
+    kw = mnpbc_container_keyword(cont);
 
     (void)bytestream_nprintf(bs,
                              1024,
@@ -1818,7 +1818,7 @@ print_dump(mrkpbc_container_t *cont, mnbytestream_t *bs)
     (void)bytestream_nprintf(bs, 1024,
         "    res += bytestream_cat(bs, 2, \"{ \");\n");
 
-    mrkpbc_container_traverse_fields(cont,
+    mnpbc_container_traverse_fields(cont,
                                      (array_traverser_t)print_dump_field,
                                      bs);
     (void)bytestream_nprintf(bs, 1024,
@@ -1832,10 +1832,10 @@ print_dump(mrkpbc_container_t *cont, mnbytestream_t *bs)
 
 static int
 print_method_def(UNUSED mnbytes_t *key,
-                 mrkpbc_container_t *cont,
+                 mnpbc_container_t *cont,
                  mnbytestream_t *bs)
 {
-    if (cont->kind != MRKPBC_CONT_KMESSAGE) {
+    if (cont->kind != MNPBC_CONT_KMESSAGE) {
         return 0;
     }
 
@@ -1858,7 +1858,7 @@ print_method_def(UNUSED mnbytes_t *key,
  * Analyzer
  */
 static int
-analyze_backend3(mrkpbc_field_t **field, UNUSED void *udata)
+analyze_backend3(mnpbc_field_t **field, UNUSED void *udata)
 {
     /*
      * analyze field
@@ -1877,7 +1877,7 @@ analyze_backend3(mrkpbc_field_t **field, UNUSED void *udata)
                                        BDATA((*field)->be.name));
     BYTES_INCREF((*field)->be.fqname);
     if ((*field)->cty != NULL) {
-        (*field)->wtype = mrkpbc_wtype_from_type((*field)->cty);
+        (*field)->wtype = mnpbc_wtype_from_type((*field)->cty);
     }
 
     return 0;
@@ -1885,32 +1885,32 @@ analyze_backend3(mrkpbc_field_t **field, UNUSED void *udata)
 
 
 static void
-set_be_methods(mrkpbc_container_t *cont)
+set_be_methods(mnpbc_container_t *cont)
 {
     /*
      * non-builtin methods
      */
-    if (cont->kind == MRKPBC_CONT_KENUM) {
-        mrkpbc_container_set_be_encode(cont,
-                                       bytes_printf("mrkpb_envarint"));
-        mrkpbc_container_set_be_decode(cont,
-                                       bytes_printf("mrkpb_unpack_int64"));
-        mrkpbc_container_set_be_sz(cont,
-                                   bytes_printf("mrkpb_szvarint"));
-        mrkpbc_container_set_be_dump(cont,
-                                     bytes_printf("mrkpb_dumpvarint"));
+    if (cont->kind == MNPBC_CONT_KENUM) {
+        mnpbc_container_set_be_encode(cont,
+                                       bytes_printf("mnpb_envarint"));
+        mnpbc_container_set_be_decode(cont,
+                                       bytes_printf("mnpb_unpack_int64"));
+        mnpbc_container_set_be_sz(cont,
+                                   bytes_printf("mnpb_szvarint"));
+        mnpbc_container_set_be_dump(cont,
+                                     bytes_printf("mnpb_dumpvarint"));
 
-    } else if (cont->kind == MRKPBC_CONT_KMESSAGE ||
-               cont->kind == MRKPBC_CONT_KONEOF) {
-        mrkpbc_container_set_be_encode(
+    } else if (cont->kind == MNPBC_CONT_KMESSAGE ||
+               cont->kind == MNPBC_CONT_KONEOF) {
+        mnpbc_container_set_be_encode(
             cont, bytes_printf("%s_pack", BDATA(cont->be.fqname)));
-        mrkpbc_container_set_be_decode(
+        mnpbc_container_set_be_decode(
             cont, bytes_printf("%s_unpack", BDATA(cont->be.fqname)));
-        mrkpbc_container_set_be_sz(
+        mnpbc_container_set_be_sz(
             cont, bytes_printf("%s_sz", BDATA(cont->be.fqname)));
-        mrkpbc_container_set_be_rawsz(
+        mnpbc_container_set_be_rawsz(
             cont, bytes_printf("%s_rawsz", BDATA(cont->be.fqname)));
-        mrkpbc_container_set_be_dump(
+        mnpbc_container_set_be_dump(
             cont, bytes_printf("%s_dump", BDATA(cont->be.fqname)));
 
     } else {
@@ -1920,7 +1920,7 @@ set_be_methods(mrkpbc_container_t *cont)
 
 
 static int
-analyze_backend2(mrkpbc_container_t **cont, UNUSED void *udata)
+analyze_backend2(mnpbc_container_t **cont, UNUSED void *udata)
 {
     /*
      * lower-level containers only
@@ -1933,7 +1933,7 @@ analyze_backend2(mrkpbc_container_t **cont, UNUSED void *udata)
 
 
 static void
-analyze_backend1(mrkpbc_container_t *cont)
+analyze_backend1(mnpbc_container_t *cont)
 {
     /*
      * analyze container
@@ -1957,18 +1957,18 @@ analyze_backend1(mrkpbc_container_t *cont)
     }
     BYTES_INCREF(cont->be.fqname);
 
-    if (cont->kind != MRKPBC_CONT_KBUILTIN) {
+    if (cont->kind != MNPBC_CONT_KBUILTIN) {
         set_be_methods(cont);
-        mrkpbc_container_traverse_containers(
+        mnpbc_container_traverse_containers(
             cont, (array_traverser_t)analyze_backend2, NULL);
-        mrkpbc_container_traverse_fields(
+        mnpbc_container_traverse_fields(
             cont, (array_traverser_t)analyze_backend3, NULL);
     }
 }
 
 
 static int
-analyze_backend0(UNUSED mnbytes_t *key, mrkpbc_container_t *cont, UNUSED void *udata)
+analyze_backend0(UNUSED mnbytes_t *key, mnpbc_container_t *cont, UNUSED void *udata)
 {
     /*
      * top-level containers only
@@ -1981,21 +1981,21 @@ analyze_backend0(UNUSED mnbytes_t *key, mrkpbc_container_t *cont, UNUSED void *u
 
 
 void
-mrkpbc_ctx_render_c(mrkpbc_ctx_t *ctx)
+mnpbc_ctx_render_c(mnpbc_ctx_t *ctx)
 {
     mnbytestream_t bs;
 
     /* analyze */
-    (void)mrkpbc_ctx_traverse(ctx, (hash_traverser_t)analyze_backend0, NULL);
+    (void)mnpbc_ctx_traverse(ctx, (hash_traverser_t)analyze_backend0, NULL);
 
     bytestream_init(&bs, 1024);
 
     /* header */
     print_header_pre(ctx, &bs);
-    (void)mrkpbc_ctx_traverse(ctx, (hash_traverser_t)print_forward_decl, &bs);
+    (void)mnpbc_ctx_traverse(ctx, (hash_traverser_t)print_forward_decl, &bs);
     (void)bytestream_nprintf(&bs, 1024, "\n");
-    (void)mrkpbc_ctx_traverse(ctx, (hash_traverser_t)print_decl, &bs);
-    (void)mrkpbc_ctx_traverse(ctx, (hash_traverser_t)print_method_decl, &bs);
+    (void)mnpbc_ctx_traverse(ctx, (hash_traverser_t)print_decl, &bs);
+    (void)mnpbc_ctx_traverse(ctx, (hash_traverser_t)print_method_decl, &bs);
     print_header_post(ctx, &bs);
 
     bs.write = bytestream_write;
@@ -2005,7 +2005,7 @@ mrkpbc_ctx_render_c(mrkpbc_ctx_t *ctx)
     bytestream_rewind(&bs);
 
     print_impl_pre(ctx, &bs);
-    (void)mrkpbc_ctx_traverse(ctx, (hash_traverser_t)print_method_def, &bs);
+    (void)mnpbc_ctx_traverse(ctx, (hash_traverser_t)print_method_def, &bs);
 
     bytestream_produce_data(&bs, (void *)(intptr_t)fileno(ctx->out1));
 
@@ -2014,7 +2014,7 @@ mrkpbc_ctx_render_c(mrkpbc_ctx_t *ctx)
 
 
 void
-mrkpbc_ctx_init_c(mrkpbc_ctx_t *ctx,
+mnpbc_ctx_init_c(mnpbc_ctx_t *ctx,
                   mnbytes_t *namein,
                   FILE *in,
                   mnbytes_t *nameout0,
@@ -2029,130 +2029,130 @@ mrkpbc_ctx_init_c(mrkpbc_ctx_t *ctx,
         const char *decode;
         const char *sz;
         const char *dump;
-        int (*print_sz_field)(mrkpbc_field_t *, mnbytestream_t *);
+        int (*print_sz_field)(mnpbc_field_t *, mnbytestream_t *);
     } builtins[] = {
         {"float", "float",
-         "mrkpb_enfloat",
-         "mrkpb_unpack_float",
-         "mrkpb_szfloat",
-         "mrkpb_dumpfloat",
+         "mnpb_enfloat",
+         "mnpb_unpack_float",
+         "mnpb_szfloat",
+         "mnpb_dumpfloat",
          NULL,
         },
         {"double", "double",
-         "mrkpb_endouble",
-         "mrkpb_unpack_double",
-         "mrkpb_szdouble",
-         "mrkpb_dumpdouble",
+         "mnpb_endouble",
+         "mnpb_unpack_double",
+         "mnpb_szdouble",
+         "mnpb_dumpdouble",
          NULL,
         },
         {"int32", "int32_t",
-         "mrkpb_pack_int32",
-         "mrkpb_unpack_int32",
-         "mrkpb_sz_int32",
-         "mrkpb_dumpvarint",
+         "mnpb_pack_int32",
+         "mnpb_unpack_int32",
+         "mnpb_sz_int32",
+         "mnpb_dumpvarint",
          NULL,
         },
         {"int64", "int64_t",
-         "mrkpb_envarint",
-         "mrkpb_unpack_int64",
-         "mrkpb_szvarint",
-         "mrkpb_dumpvarint",
+         "mnpb_envarint",
+         "mnpb_unpack_int64",
+         "mnpb_szvarint",
+         "mnpb_dumpvarint",
          NULL,
         },
         {"uint32", "uint32_t",
-         "mrkpb_envarint",
-         "mrkpb_unpack_uint32",
-         "mrkpb_szvarint",
-         "mrkpb_dumpvarint",
+         "mnpb_envarint",
+         "mnpb_unpack_uint32",
+         "mnpb_szvarint",
+         "mnpb_dumpvarint",
          NULL,
         },
         {"uint64", "uint64_t",
-         "mrkpb_envarint",
-         "mrkpb_unpack_uint64",
-         "mrkpb_szvarint",
-         "mrkpb_dumpvarint",
+         "mnpb_envarint",
+         "mnpb_unpack_uint64",
+         "mnpb_szvarint",
+         "mnpb_dumpvarint",
          NULL,
         },
         {"sint32", "int32_t",
-         "mrkpb_enzz32",
-         "mrkpb_unpack_sint32",
-         "mrkpb_szzz32",
-         "mrkpb_dumpzz32",
+         "mnpb_enzz32",
+         "mnpb_unpack_sint32",
+         "mnpb_szzz32",
+         "mnpb_dumpzz32",
          NULL,
         },
         {"sint64", "int64_t",
-         "mrkpb_enzz64",
-         "mrkpb_unpack_sint64",
-         "mrkpb_szzz64",
-         "mrkpb_dumpzz64",
+         "mnpb_enzz64",
+         "mnpb_unpack_sint64",
+         "mnpb_szzz64",
+         "mnpb_dumpzz64",
          NULL,
         },
         {"fixed32", "uint32_t",
-         "mrkpb_enfi32",
-         "mrkpb_unpack_fixed32",
-         "mrkpb_szfi32",
-         "mrkpb_dumpfi32",
+         "mnpb_enfi32",
+         "mnpb_unpack_fixed32",
+         "mnpb_szfi32",
+         "mnpb_dumpfi32",
          NULL,
         },
         {"fixed64", "uint64_t",
-         "mrkpb_enfi64",
-         "mrkpb_unpack_fixed64",
-         "mrkpb_szfi64",
-         "mrkpb_dumpfi64",
+         "mnpb_enfi64",
+         "mnpb_unpack_fixed64",
+         "mnpb_szfi64",
+         "mnpb_dumpfi64",
          NULL,
         },
         {"sfixed32", "int32_t",
-         "mrkpb_enfi32",
-         "mrkpb_unpack_sfixed32",
-         "mrkpb_szfi32",
-         "mrkpb_dumpfi32",
+         "mnpb_enfi32",
+         "mnpb_unpack_sfixed32",
+         "mnpb_szfi32",
+         "mnpb_dumpfi32",
          NULL,
         },
         {"sfixed64", "int64_t",
-         "mrkpb_enfi64",
-         "mrkpb_unpack_sfixed64",
-         "mrkpb_szfi64",
-         "mrkpb_dumpfi64",
+         "mnpb_enfi64",
+         "mnpb_unpack_sfixed64",
+         "mnpb_szfi64",
+         "mnpb_dumpfi64",
          NULL,
         },
         {"bool", "bool",
-         "mrkpb_envarint",
-         "mrkpb_unpack_bool",
-         "mrkpb_szvarint",
-         "mrkpb_dumpvarint",
+         "mnpb_envarint",
+         "mnpb_unpack_bool",
+         "mnpb_szvarint",
+         "mnpb_dumpvarint",
          NULL,
         },
         {"string", "mnbytes_t *",
-         "mrkpb_enstr",
-         "mrkpb_unpack_string",
-         "mrkpb_szstr",
-         "mrkpb_dumpstr",
+         "mnpb_enstr",
+         "mnpb_unpack_string",
+         "mnpb_szstr",
+         "mnpb_dumpstr",
          NULL,
         },
         {"bytes", "mnbytes_t *",
-         "mrkpb_enbytes",
-         "mrkpb_unpack_bytes",
-         "mrkpb_szbytes",
-         "mrkpb_dumpbytes",
+         "mnpb_enbytes",
+         "mnpb_unpack_bytes",
+         "mnpb_szbytes",
+         "mnpb_dumpbytes",
          NULL,
         },
     };
     unsigned i;
 
     for (i = 0; i < countof(builtins); ++i) {
-        mrkpbc_container_t *cont;
+        mnpbc_container_t *cont;
         mnbytes_t *ty;
         ty = bytes_new_from_str(builtins[i].pbname);
-        cont = mrkpbc_ctx_add_container(ctx, NULL, ty, MRKPBC_CONT_KBUILTIN);
-        mrkpbc_container_set_pb_fqname(cont,
+        cont = mnpbc_ctx_add_container(ctx, NULL, ty, MNPBC_CONT_KBUILTIN);
+        mnpbc_container_set_pb_fqname(cont,
                                        bytes_new_from_str(builtins[i].fqname));
-        mrkpbc_container_set_be_encode(cont,
+        mnpbc_container_set_be_encode(cont,
                                        bytes_new_from_str(builtins[i].encode));
-        mrkpbc_container_set_be_decode(cont,
+        mnpbc_container_set_be_decode(cont,
                                        bytes_new_from_str(builtins[i].decode));
-        mrkpbc_container_set_be_sz(cont,
+        mnpbc_container_set_be_sz(cont,
                                    bytes_new_from_str(builtins[i].sz));
-        mrkpbc_container_set_be_dump(cont,
+        mnpbc_container_set_be_dump(cont,
                                      bytes_new_from_str(builtins[i].dump));
     }
 

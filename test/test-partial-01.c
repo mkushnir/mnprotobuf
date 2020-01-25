@@ -1,11 +1,11 @@
 #include <assert.h>
 
-#include <mrkcommon/bytes.h>
-#include <mrkcommon/bytestream_aux.h>
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
+#include <mncommon/bytes.h>
+#include <mncommon/bytestream_aux.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
 
-#include <mrkprotobuf.h>
+#include <mnprotobuf.h>
 
 #include "data/partial-01.h"
 
@@ -27,7 +27,7 @@ myreadmore(UNUSED mnbytestream_t *bs,
     return -1;
 }
 
-//#define MRK_INTERLEAVE
+//#define MN_INTERLEAVE
 
 int
 main(void)
@@ -80,7 +80,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -89,7 +89,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -98,7 +98,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -107,7 +107,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -116,7 +116,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -125,7 +125,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -134,7 +134,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -143,7 +143,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -152,7 +152,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -161,7 +161,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -170,7 +170,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -179,7 +179,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -188,7 +188,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -197,7 +197,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -206,7 +206,7 @@ main(void)
     D8(SPDATA(&bs0), SEOD(&bs0));
     TRACE("sz=%zd", sz);
 
-#ifdef MRK_INTERLEAVE
+#ifdef MN_INTERLEAVE
     sz = partial_01_unpack(&bs0, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs0));
 #endif
@@ -216,7 +216,7 @@ main(void)
     SEOD(&bs1) = BSZ(s);
     //D8(SPDATA(&bs1), SEOD(&bs1));
 
-#ifndef MRK_INTERLEAVE
+#ifndef MN_INTERLEAVE
     sz = partial_01_unpack(&bs1, NULL, part0);
     TRACE("sz=%zd spos=%ld", sz, (long)SPOS(&bs1));
 #endif

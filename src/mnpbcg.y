@@ -2,13 +2,13 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#include <mrkcommon/bytes.h>
-#include <mrkcommon/dumpm.h>
+#include <mncommon/bytes.h>
+#include <mncommon/dumpm.h>
 
-#include "mrkpbc.h"
+#include "mnpbc.h"
 
 int yylex (void);
-void yyerror (mrkpbc_ctx_t *ctx, const char *);
+void yyerror (mnpbc_ctx_t *ctx, const char *);
 extern char *yytext;
 
 extern mnbytes_t *yydqstr;
@@ -22,7 +22,7 @@ static mnbytes_t _proto3 = BYTES_INITIALIZER("proto3");
 
 %}
 
-%parse-param {mrkpbc_ctx_t *ctx}
+%parse-param {mnpbc_ctx_t *ctx}
 %locations
 
 %union {
@@ -32,9 +32,9 @@ static mnbytes_t _proto3 = BYTES_INITIALIZER("proto3");
 
 %token YYEOF 0
 
-%token MRKPBC_SYNTAX MRKPBC_MESSAGE MRKPBC_RESERVED MRKPBC_REPEATED MRKPBC_ENUM MRKPBC_OPTION MRKPBC_ONEOF MRKPBC_IMPORT MRKPBC_PACKAGE MRKPBC_SEMI MRKPBC_LCURLY MRKPBC_RCURLY MRKPBC_EQUALS MRKPBC_NZNUM MRKPBC_ZNUM MRKPBC_DQSTR MRKPBC_TOKEN
+%token MNPBC_SYNTAX MNPBC_MESSAGE MNPBC_RESERVED MNPBC_REPEATED MNPBC_ENUM MNPBC_OPTION MNPBC_ONEOF MNPBC_IMPORT MNPBC_PACKAGE MNPBC_SEMI MNPBC_LCURLY MNPBC_RCURLY MNPBC_EQUALS MNPBC_NZNUM MNPBC_ZNUM MNPBC_DQSTR MNPBC_TOKEN
 
-%token MRKPBC_BUILTIN_TYPE
+%token MNPBC_BUILTIN_TYPE
 
 %type <str> token builtin type qstr
 %type <num> tag etag
@@ -45,20 +45,20 @@ static mnbytes_t _proto3 = BYTES_INITIALIZER("proto3");
 %%
 
 qstr:
-    MRKPBC_DQSTR {
+    MNPBC_DQSTR {
         $$ = yydqstr;
         yydqstr = NULL;
     }
     ;
 
 token:
-    MRKPBC_TOKEN {
+    MNPBC_TOKEN {
         $$ = bytes_new_from_str(yytext);
     }
     ;
 
 builtin:
-    MRKPBC_BUILTIN_TYPE {
+    MNPBC_BUILTIN_TYPE {
         $$ = bytes_new_from_str(yytext);
     }
     ;
@@ -68,27 +68,27 @@ type:
 
 
 tag:
-    MRKPBC_NZNUM {
+    MNPBC_NZNUM {
         $$ = (int)strtol(yytext, NULL, 10);
     };
 
 etag:
-    MRKPBC_NZNUM {
+    MNPBC_NZNUM {
         $$ = (int)strtol(yytext, NULL, 10);
     }
     |
-    MRKPBC_ZNUM {
+    MNPBC_ZNUM {
         $$ = (int)strtol(yytext, NULL, 10);
     };
 
 //sbfield:
-//     builtin token MRKPBC_EQUALS tag MRKPBC_SEMI {
-//        mrkpbc_container_t *cont;
+//     builtin token MNPBC_EQUALS tag MNPBC_SEMI {
+//        mnpbc_container_t *cont;
 //
-//        if ((cont = mrkpbc_ctx_top_container(ctx)) != NULL) {
+//        if ((cont = mnpbc_ctx_top_container(ctx)) != NULL) {
 //            int res;
 //
-//            if ((res = mrkpbc_container_add_field(cont,
+//            if ((res = mnpbc_container_add_field(cont,
 //                                                  $1,
 //                                                  $2,
 //                                                  $4,
@@ -99,13 +99,13 @@ etag:
 //     };
 
 sfield:
-     type token MRKPBC_EQUALS tag MRKPBC_SEMI {
-        mrkpbc_container_t *cont;
+     type token MNPBC_EQUALS tag MNPBC_SEMI {
+        mnpbc_container_t *cont;
 
-        if ((cont = mrkpbc_ctx_top_container(ctx)) != NULL) {
+        if ((cont = mnpbc_ctx_top_container(ctx)) != NULL) {
             int res;
 
-            if ((res = mrkpbc_container_add_field(cont,
+            if ((res = mnpbc_container_add_field(cont,
                                                   $1,
                                                   $2,
                                                   $4,
@@ -116,13 +116,13 @@ sfield:
      };
 
 rfield:
-     MRKPBC_REPEATED type token MRKPBC_EQUALS tag MRKPBC_SEMI {
-        mrkpbc_container_t *cont;
+     MNPBC_REPEATED type token MNPBC_EQUALS tag MNPBC_SEMI {
+        mnpbc_container_t *cont;
 
-        if ((cont = mrkpbc_ctx_top_container(ctx)) != NULL) {
+        if ((cont = mnpbc_ctx_top_container(ctx)) != NULL) {
             int res;
 
-            if ((res = mrkpbc_container_add_field(cont,
+            if ((res = mnpbc_container_add_field(cont,
                                                   $2,
                                                   $3,
                                                   $5,
@@ -137,13 +137,13 @@ field:
     sfield | rfield
 
 eitem:
-    token MRKPBC_EQUALS etag MRKPBC_SEMI {
-        mrkpbc_container_t *cont;
+    token MNPBC_EQUALS etag MNPBC_SEMI {
+        mnpbc_container_t *cont;
 
-        if ((cont = mrkpbc_ctx_top_container(ctx)) != NULL) {
+        if ((cont = mnpbc_ctx_top_container(ctx)) != NULL) {
             int res;
 
-            if ((res = mrkpbc_container_add_field(cont,
+            if ((res = mnpbc_container_add_field(cont,
                                                   NULL,
                                                   $1,
                                                   $3,
@@ -158,24 +158,24 @@ eitems:
     | eitem eitems;
 
 estart:
-    MRKPBC_ENUM token {
-        mrkpbc_container_t *parent, *cont;
+    MNPBC_ENUM token {
+        mnpbc_container_t *parent, *cont;
 
-        parent = mrkpbc_ctx_top_container(ctx);
-        if ((cont = mrkpbc_ctx_add_container(ctx,
+        parent = mnpbc_ctx_top_container(ctx);
+        if ((cont = mnpbc_ctx_add_container(ctx,
                                              parent,
                                              $2,
-                                             MRKPBC_CONT_KENUM)) == NULL) {
+                                             MNPBC_CONT_KENUM)) == NULL) {
             YYERROR;
         } else {
-            mrkpbc_ctx_push_container(ctx, cont);
+            mnpbc_ctx_push_container(ctx, cont);
         }
     }
     ;
 
 enum:
-    estart MRKPBC_LCURLY eitems MRKPBC_RCURLY {
-        mrkpbc_ctx_pop_container(ctx);
+    estart MNPBC_LCURLY eitems MNPBC_RCURLY {
+        mnpbc_ctx_pop_container(ctx);
     }
     ;
 
@@ -186,34 +186,34 @@ sfields:
     | sfield sfields;
 
 ostart:
-    MRKPBC_ONEOF token {
-        mrkpbc_container_t *parent, *cont;
+    MNPBC_ONEOF token {
+        mnpbc_container_t *parent, *cont;
 
-        if ((parent = mrkpbc_ctx_top_container(ctx)) != NULL) {
-            if ((cont = mrkpbc_ctx_add_container(
-                    ctx, parent, $2, MRKPBC_CONT_KONEOF)) == NULL) {
+        if ((parent = mnpbc_ctx_top_container(ctx)) != NULL) {
+            if ((cont = mnpbc_ctx_add_container(
+                    ctx, parent, $2, MNPBC_CONT_KONEOF)) == NULL) {
                 YYERROR;
             } else {
-                mrkpbc_ctx_push_container(ctx, cont);
+                mnpbc_ctx_push_container(ctx, cont);
             }
         }
     }
     ;
 
 oneof:
-    ostart MRKPBC_LCURLY sfields MRKPBC_RCURLY {
-        mrkpbc_container_t *un, *cont;
+    ostart MNPBC_LCURLY sfields MNPBC_RCURLY {
+        mnpbc_container_t *un, *cont;
         int res;
 
-        un = mrkpbc_ctx_top_container(ctx);
+        un = mnpbc_ctx_top_container(ctx);
         assert(un != NULL);
-        mrkpbc_ctx_pop_container(ctx);
-        cont = mrkpbc_ctx_top_container(ctx);
+        mnpbc_ctx_pop_container(ctx);
+        cont = mnpbc_ctx_top_container(ctx);
         assert(cont != NULL);
-        if ((res = mrkpbc_container_add_field(cont,
+        if ((res = mnpbc_container_add_field(cont,
                                               un->pb.fqname,
                                               un->pb.name,
-                                              MRKPBC_FNUM_ONEOF,
+                                              MNPBC_FNUM_ONEOF,
                                               0)) != 0) {
             YYERROR;
         }
@@ -227,24 +227,24 @@ mitems:
     | mitem mitems;
 
 mstart:
-    MRKPBC_MESSAGE token {
-        mrkpbc_container_t *parent, *cont;
+    MNPBC_MESSAGE token {
+        mnpbc_container_t *parent, *cont;
 
-        parent = mrkpbc_ctx_top_container(ctx);
-        if ((cont = mrkpbc_ctx_add_container(ctx,
+        parent = mnpbc_ctx_top_container(ctx);
+        if ((cont = mnpbc_ctx_add_container(ctx,
                                              parent,
                                              $2,
-                                             MRKPBC_CONT_KMESSAGE)) == NULL) {
+                                             MNPBC_CONT_KMESSAGE)) == NULL) {
             YYERROR;
         } else {
-            mrkpbc_ctx_push_container(ctx, cont);
+            mnpbc_ctx_push_container(ctx, cont);
         }
     }
     ;
 
 message:
-    mstart MRKPBC_LCURLY mitems MRKPBC_RCURLY {
-        mrkpbc_ctx_pop_container(ctx);
+    mstart MNPBC_LCURLY mitems MNPBC_RCURLY {
+        mnpbc_ctx_pop_container(ctx);
     };
 
 pitem:
@@ -254,7 +254,7 @@ pitems:
     | pitem pitems;
 
 syntax:
-    MRKPBC_SYNTAX MRKPBC_EQUALS qstr MRKPBC_SEMI {
+    MNPBC_SYNTAX MNPBC_EQUALS qstr MNPBC_SEMI {
         if (bytes_cmp($3, &_proto3) != 0) {
             TRACE("Syntax is not supported: %s", BDATA($3));
             YYERROR;

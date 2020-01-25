@@ -1,11 +1,11 @@
 #include <assert.h>
 
-#include <mrkcommon/bytes.h>
-#include <mrkcommon/bytestream_aux.h>
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
+#include <mncommon/bytes.h>
+#include <mncommon/bytestream_aux.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
 
-#include <mrkprotobuf.h>
+#include <mnprotobuf.h>
 
 #include "data/scalar-01.h"
 
