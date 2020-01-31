@@ -58,6 +58,7 @@ then
     unset CFLAGS
     autoreconf --force
     ./configure
+    make dist
 
     if test -f port/distinfo
     then

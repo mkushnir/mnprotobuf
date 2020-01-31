@@ -1,4 +1,4 @@
-AC_INIT(mrkprotobuf, 0.1, markiyan.kushnir@gmail.com, mrkprotobuf, https://github.com/mkushnir)
+AC_INIT(mnprotobuf, 0.1, markiyan.kushnir@gmail.com, mnprotobuf, https://github.com/mkushnir)
 
 AS_IF([test -n "$USE_GCC"],
 [
@@ -48,7 +48,7 @@ AS_IF([test -n "$USE_GCC"],
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([.ac-aux])
-AC_CONFIG_FILES([Makefile src/Makefile test/Makefile man/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile test/Makefile man/Makefile port/Makefile])
 AC_CONFIG_HEADERS(config.h)
 
 AC_CANONICAL_HOST
@@ -124,6 +124,6 @@ AM_CONDITIONAL([FREEBSD], [echo $build_os | grep freebsd >/dev/null])
 AM_CONDITIONAL([DARWIN], [echo $build_os | grep darwin >/dev/null])
 
 #dnl pass LDFLAGS=-L${LOCALBASE}/lib in the environment
-#AC_CHECK_LIB(mrkcommon, _fini, [], [AC_MSG_FAILURE(libmrkcommon.so is required. Please find it at git@github.com:mkushnir/mrkcommon.git)])
+#AC_CHECK_LIB(mncommon, _fini, [], [AC_MSG_FAILURE(libmncommon.so is required. Please find it at git@github.com:mkushnir/mncommon.git)])
 
 AC_OUTPUT

@@ -19,13 +19,13 @@ bin_PROGRAMS = mnpbc
 
 nobase_include_HEADERS = mnprotobuf.h
 
-noinst_HEADERS = mnpbc.h
+noinst_HEADERS = mnpbc.h mnprotobuf_private.h
 
 libmnprotobuf_la_SOURCES = mnprotobuf.c
 nodist_libmnprotobuf_la_SOURCES = diag.c
 
 nodist_mnpbc_SOURCES = diag.c
-mnpbc_SOURCES = mnpbcg.y mnpbcl.l mnpbcscan.c mnpbcc.c mnpbc-main.c
+mnpbc_SOURCES = mnpbcg.y mnpbcg.h mnpbcl.l mnpbcscan.c mnpbcc.c mnpbc-main.c
 
 diags = diag.txt
 
